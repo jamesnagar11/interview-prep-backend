@@ -1,0 +1,213 @@
+// use prisma-8
+
+  model User {
+    id           ObjectId @id @map("_id")
+    email        String   @unique
+    passwordHash String
+    createdAt    DateTime   @default(now())
+    kits         Kit[]
+    attempts     PracticeAttempt[]
+  }
+
+  model Kit {
+    id            ObjectId @id @map("_id")
+    userId        String
+    user          User     @relation(fields: [userId], references: [id])
+
+    // idempotency: hash of (jdText + companyUrl) to catch duplicate submissions
+    dedupeHash    String
+
+    // source
+    companyName   String?
+    companyUrl    String
+    jdText        String
+    jdChars       Int
+    role          String?
+    location      String?
+    daysAvailable Int
+    researchedAt  DateTime?
+
+    // company_brief
+    briefSummary    String?
+    briefWhatTheyDo String?
+
+    // top-level role fields
+    roleTitle     String?
+    roleSeniority String?
+
+    status        KitStatus
+    failureReason String?
+    coveragePasses Int
+
+    createdAt     DateTime
+    updatedAt     DateTime
+
+    pagesUsed             KitPage[]
+    briefSources          BriefSource[]
+    responsibilities      Responsibility[]
+    uncoveredRequirements UncoveredRequirement[]
+
+    sourcePages   SourcePage[]
+    requirements  Requirement[]
+    questions     Question[]
+    flashcards    Flashcard[]
+    scheduleDays  ScheduleDay[]
+
+    @@index([userId])
+    @@index([dedupeHash])
+  }
+
+  enum KitStatus {
+    DRAFT
+    RESEARCHING
+    EXTRACTING
+    GENERATING
+    CHECKING_COVERAGE
+    SCHEDULING
+    READY
+    FAILED
+  }
+
+  model KitPage {
+    id    ObjectId @id @map("_id")
+    kitId String
+    kit   Kit      @relation(fields: [kitId], references: [id])
+    url   String
+  }
+
+  model BriefSource {
+    id    ObjectId @id @map("_id")
+    kitId String
+    kit   Kit      @relation(fields: [kitId], references: [id])
+    url   String
+  }
+
+  model Responsibility {
+    id          ObjectId @id @map("_id")
+    kitId       String
+    kit         Kit      @relation(fields: [kitId], references: [id])
+    description String
+  }
+
+  model UncoveredRequirement {
+    id        ObjectId @id @map("_id")
+    kitId     String
+    kit       Kit      @relation(fields: [kitId], references: [id])
+    stableKey String   // stableKey list, e.g. "r3"
+  }
+
+  model SourcePage {
+    id        ObjectId @id @map("_id")
+    kitId     String
+    kit       Kit      @relation(fields: [kitId], references: [id])
+    url       String
+    kind      String   // "hiring" | "about" | "interview_discussion"
+    status    String   // "ok" | "skipped" | "failed"
+    reason    String?  // e.g. "404", "robots_disallowed", "timeout"
+    fetchedAt DateTime
+  }
+
+  model Requirement {
+    id        ObjectId @id @map("_id")
+    kitId     String
+    kit       Kit      @relation(fields: [kitId], references: [id])
+    stableKey String   // "r1" — stable WITHIN this kit, used in output JSON
+    text      String
+    kind      String   // "technical" | "behavioural" | "domain"
+    priority  String   // "must" | "nice"
+
+    questions  QuestionRequirement[]
+    flashcards FlashcardRequirement[]
+
+    @@unique([kitId, stableKey])
+  }
+
+  model Question {
+    id           ObjectId @id @map("_id")
+    kitId        String
+    kit          Kit      @relation(fields: [kitId], references: [id])
+    stableKey    String   // "q1"
+    category     String   // technical | behavioural | system-design | company-fit
+    prompt       String
+    answerOutline String
+    difficulty   Int      // 1-3
+    state        ItemState // GENERATED | EDITED | PINNED
+    orderIndex   Int      // for manual reordering within category
+
+    requirements QuestionRequirement[]
+    scheduleSlots ScheduleDayQuestion[]
+
+    @@unique([kitId, stableKey])
+  }
+
+  model QuestionRequirement {
+    id            ObjectId    @id @map("_id")
+    questionId    String
+    requirementId String
+    question      Question    @relation(fields: [questionId], references: [id])
+    requirement   Requirement @relation(fields: [requirementId], references: [id])
+    @@unique([questionId, requirementId])
+  }
+
+  model Flashcard {
+    id        ObjectId @id @map("_id")
+    kitId     String
+    kit       Kit      @relation(fields: [kitId], references: [id])
+    stableKey String   // "f1"
+    front     String
+    back      String
+    state     ItemState
+    orderIndex Int
+
+    requirements FlashcardRequirement[]
+    attempts     PracticeAttempt[]
+  }
+
+  model FlashcardRequirement {
+    id            ObjectId    @id @map("_id")
+    flashcardId   String
+    requirementId String
+    flashcard     Flashcard   @relation(fields: [flashcardId], references: [id])
+    requirement   Requirement @relation(fields: [requirementId], references: [id])
+    @@unique([flashcardId, requirementId])
+  }
+
+  enum ItemState {
+    GENERATED // untouched model output — safe to overwrite on regeneration
+    EDITED    // user changed text — must survive regeneration
+    PINNED    // user explicitly locked it — must survive regeneration + excluded from auto-replace
+  }
+
+  model ScheduleDay {
+    id        ObjectId @id @map("_id")
+    kitId     String
+    kit       Kit      @relation(fields: [kitId], references: [id])
+    dayNumber Int
+    focus     String
+    minutes   Int
+
+    questions ScheduleDayQuestion[]
+    @@unique([kitId, dayNumber])
+  }
+
+  model ScheduleDayQuestion {
+    id            ObjectId    @id @map("_id")
+    scheduleDayId String
+    questionId    String
+    position      Int
+    scheduleDay   ScheduleDay @relation(fields: [scheduleDayId], references: [id])
+    question      Question    @relation(fields: [questionId], references: [id])
+    @@unique([scheduleDayId, questionId])
+  }
+
+  model PracticeAttempt {
+    id          ObjectId @id @map("_id")
+    userId      String
+    user        User     @relation(fields: [userId], references: [id])
+    flashcardId String
+    flashcard   Flashcard @relation(fields: [flashcardId], references: [id])
+    confidence  Int       // e.g. 1 (low) – 3 (high)
+    attemptedAt DateTime
+
+    @@index([flashcardId])
+  }
