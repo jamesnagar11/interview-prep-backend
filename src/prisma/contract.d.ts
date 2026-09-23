@@ -18,7 +18,7 @@ import type {
 } from '@prisma/orm-mongo/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'d84961bcddc52d1b807de971cc0513dd1019138fd4229d833602e0f058f50f2b'>;
+  StorageHashBase<'0100b924e4cb8566da657aa59828bd6301bcd76035547be9398fcb7925060c83'>;
 export type ExecutionHash = ExecutionHashBase<string>;
 export type ProfileHash =
   ProfileHashBase<'251b3ce23f6c9f561892e7c1af9d2cc941a13d64ba1aa7226b90036b09568cc3'>;
@@ -146,6 +146,7 @@ export type FieldOutputTypes = {
     };
     readonly User: {
       readonly _id: CodecTypes['mongo/objectId@1']['output'];
+      readonly name: CodecTypes['mongo/string@1']['output'];
       readonly email: CodecTypes['mongo/string@1']['output'];
       readonly passwordHash: CodecTypes['mongo/string@1']['output'];
       readonly createdAt: CodecTypes['mongo/date@1']['output'];
@@ -273,6 +274,7 @@ export type FieldInputTypes = {
     };
     readonly User: {
       readonly _id: CodecTypes['mongo/objectId@1']['input'];
+      readonly name: CodecTypes['mongo/string@1']['input'];
       readonly email: CodecTypes['mongo/string@1']['input'];
       readonly passwordHash: CodecTypes['mongo/string@1']['input'];
       readonly createdAt: CodecTypes['mongo/date@1']['input'];
@@ -283,6 +285,7 @@ export type FieldInputTypes = {
 export namespace Models {
   export type unbound_User = {
     _id: CodecTypes['mongo/objectId@1']['output'];
+    name: CodecTypes['mongo/string@1']['output'];
     email: CodecTypes['mongo/string@1']['output'];
     passwordHash: CodecTypes['mongo/string@1']['output'];
     createdAt: CodecTypes['mongo/date@1']['output'];
@@ -949,12 +952,13 @@ type ContractBase = Omit<
                   readonly bsonType: 'object';
                   readonly properties: {
                     readonly _id: { readonly bsonType: 'objectId' };
+                    readonly name: { readonly bsonType: 'string' };
                     readonly email: { readonly bsonType: 'string' };
                     readonly passwordHash: { readonly bsonType: 'string' };
                     readonly createdAt: { readonly bsonType: 'date' };
                   };
                   readonly additionalProperties: false;
-                  readonly required: readonly ['_id', 'createdAt', 'email', 'passwordHash'];
+                  readonly required: readonly ['_id', 'createdAt', 'email', 'name', 'passwordHash'];
                 };
                 readonly validationLevel: 'strict';
                 readonly validationAction: 'error';
@@ -1849,6 +1853,10 @@ type ContractBase = Omit<
               readonly _id: {
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'mongo/objectId@1' };
+              };
+              readonly name: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'mongo/string@1' };
               };
               readonly email: {
                 readonly nullable: false;

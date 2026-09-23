@@ -7,6 +7,7 @@ const JWT_SECRET = process.env.JWT_SECRET || "default_jwt_secret";
 export interface JwtPayload {
   userId: string;
   email: string;
+  name: string;
 }
 
 export const generateToken = (payload: JwtPayload): string => {
@@ -17,7 +18,7 @@ export const verifyToken = (token: string): JwtPayload => {
   return jwt.verify(token, JWT_SECRET) as JwtPayload;
 };
 
-export const createUser = async (email: string, password: string) => {
+export const createUser = async (email: string, password: string, name: string) => {
   const exist = await db.orm.user.where({ email: email }).first();
   if (exist) {
     throw new Error("User already exists");
@@ -30,12 +31,14 @@ export const createUser = async (email: string, password: string) => {
   const user = await db.orm.user.create({
     email: email,
     passwordHash: hashedPassword,
+    name: name,
     createdAt: new Date(),
   });
 
   const token = generateToken({
     userId: user._id.toString(),
     email: user.email,
+    name: user.name
   });
 
   return { user, token };
@@ -59,6 +62,7 @@ export const loginUser = async (email: string, password: string) => {
   const token = generateToken({
     userId: user._id.toString(),
     email: user.email,
+    name: user.name
   });
 
   return { user, token };

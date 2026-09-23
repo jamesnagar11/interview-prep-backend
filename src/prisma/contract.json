@@ -1387,6 +1387,13 @@
                   "kind": "scalar"
                 }
               },
+              "name": {
+                "nullable": false,
+                "type": {
+                  "codecId": "mongo/string@1",
+                  "kind": "scalar"
+                }
+              },
               "passwordHash": {
                 "nullable": false,
                 "type": {
@@ -2183,6 +2190,9 @@
                     "email": {
                       "bsonType": "string"
                     },
+                    "name": {
+                      "bsonType": "string"
+                    },
                     "passwordHash": {
                       "bsonType": "string"
                     }
@@ -2191,6 +2201,7 @@
                     "_id",
                     "createdAt",
                     "email",
+                    "name",
                     "passwordHash"
                   ]
                 },
@@ -2228,7 +2239,7 @@
         "kind": "mongo-database"
       }
     },
-    "storageHash": "d84961bcddc52d1b807de971cc0513dd1019138fd4229d833602e0f058f50f2b"
+    "storageHash": "0100b924e4cb8566da657aa59828bd6301bcd76035547be9398fcb7925060c83"
   },
   "capabilities": {},
   "extensions": {},

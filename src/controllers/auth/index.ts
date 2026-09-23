@@ -3,14 +3,14 @@ import { createUser, loginUser, verifyToken } from "../../service/auth";
 
 export const signup = async (req: Request, res: Response) => {
   try {
-    const { email, password } = req.body;
-    if (!email || !password) {
+    const { email, password, name } = req.body;
+    if (!email || !password || !name) {
       return res
         .status(400)
-        .json({ success: false, msg: "Email and password are required" });
+        .json({ success: false, msg: "Email, password and name are required" });
     }
 
-    const { token } = await createUser(email, password);
+    const { token } = await createUser(email, password, name);
     return res
       .status(201)
       .json({ success: true, msg: "User created successfully", token });
@@ -21,7 +21,7 @@ export const signup = async (req: Request, res: Response) => {
   }
 };
 
-export const login = async (req: Request, res: Response) => {
+export const signin = async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
     if (!email || !password) {
