@@ -18,7 +18,7 @@ import type {
 } from '@prisma/orm-mongo/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'9147e09435f09b79b26a17319af15690ba18323ee1c2864283c3f756bc847ad2'>;
+  StorageHashBase<'4d92e6d9da6bc2d0e72d67d40ede9606b424278e7e684386988d068cc38710b7'>;
 export type ExecutionHash = ExecutionHashBase<string>;
 export type ProfileHash =
   ProfileHashBase<'251b3ce23f6c9f561892e7c1af9d2cc941a13d64ba1aa7226b90036b09568cc3'>;
@@ -60,8 +60,11 @@ export type FieldOutputTypes = {
       readonly researchedAt: CodecTypes['mongo/date@1']['output'] | null;
       readonly briefSummary: CodecTypes['mongo/string@1']['output'] | null;
       readonly briefWhatTheyDo: CodecTypes['mongo/string@1']['output'] | null;
+      readonly briefState: 'GENERATED' | 'EDITED' | 'PINNED' | null;
       readonly roleTitle: CodecTypes['mongo/string@1']['output'] | null;
       readonly roleSeniority: CodecTypes['mongo/string@1']['output'] | null;
+      readonly research: CodecTypes['mongo/string@1']['output'] | null;
+      readonly scheduleStale: CodecTypes['mongo/bool@1']['output'] | null;
       readonly status:
         | 'PENDING'
         | 'RUNNING'
@@ -87,10 +90,18 @@ export type FieldOutputTypes = {
     };
     readonly PracticeAttempt: {
       readonly _id: CodecTypes['mongo/objectId@1']['output'];
-      readonly userId: CodecTypes['mongo/string@1']['output'];
+      readonly sessionId: CodecTypes['mongo/string@1']['output'];
       readonly flashcardId: CodecTypes['mongo/string@1']['output'];
-      readonly confidence: CodecTypes['mongo/int32@1']['output'];
+      readonly confidence: CodecTypes['mongo/int32@1']['output'] | null;
+      readonly skipped: CodecTypes['mongo/bool@1']['output'] | null;
       readonly attemptedAt: CodecTypes['mongo/date@1']['output'];
+    };
+    readonly PracticeSession: {
+      readonly _id: CodecTypes['mongo/objectId@1']['output'];
+      readonly userId: CodecTypes['mongo/string@1']['output'];
+      readonly kitId: CodecTypes['mongo/string@1']['output'];
+      readonly startedAt: CodecTypes['mongo/date@1']['output'];
+      readonly endedAt: CodecTypes['mongo/date@1']['output'] | null;
     };
     readonly Question: {
       readonly _id: CodecTypes['mongo/objectId@1']['output'];
@@ -192,8 +203,11 @@ export type FieldInputTypes = {
       readonly researchedAt: CodecTypes['mongo/date@1']['input'] | null;
       readonly briefSummary: CodecTypes['mongo/string@1']['input'] | null;
       readonly briefWhatTheyDo: CodecTypes['mongo/string@1']['input'] | null;
+      readonly briefState: 'GENERATED' | 'EDITED' | 'PINNED' | null;
       readonly roleTitle: CodecTypes['mongo/string@1']['input'] | null;
       readonly roleSeniority: CodecTypes['mongo/string@1']['input'] | null;
+      readonly research: CodecTypes['mongo/string@1']['input'] | null;
+      readonly scheduleStale: CodecTypes['mongo/bool@1']['input'] | null;
       readonly status:
         | 'PENDING'
         | 'RUNNING'
@@ -219,10 +233,18 @@ export type FieldInputTypes = {
     };
     readonly PracticeAttempt: {
       readonly _id: CodecTypes['mongo/objectId@1']['input'];
-      readonly userId: CodecTypes['mongo/string@1']['input'];
+      readonly sessionId: CodecTypes['mongo/string@1']['input'];
       readonly flashcardId: CodecTypes['mongo/string@1']['input'];
-      readonly confidence: CodecTypes['mongo/int32@1']['input'];
+      readonly confidence: CodecTypes['mongo/int32@1']['input'] | null;
+      readonly skipped: CodecTypes['mongo/bool@1']['input'] | null;
       readonly attemptedAt: CodecTypes['mongo/date@1']['input'];
+    };
+    readonly PracticeSession: {
+      readonly _id: CodecTypes['mongo/objectId@1']['input'];
+      readonly userId: CodecTypes['mongo/string@1']['input'];
+      readonly kitId: CodecTypes['mongo/string@1']['input'];
+      readonly startedAt: CodecTypes['mongo/date@1']['input'];
+      readonly endedAt: CodecTypes['mongo/date@1']['input'] | null;
     };
     readonly Question: {
       readonly _id: CodecTypes['mongo/objectId@1']['input'];
@@ -298,8 +320,8 @@ export namespace Models {
     passwordHash: CodecTypes['mongo/string@1']['output'];
     createdAt: CodecTypes['mongo/date@1']['output'];
     kits: unbound_Kit[];
-    attempts: unbound_PracticeAttempt[];
-    readonly [RelationKeys]?: 'kits' | 'attempts';
+    practiceSessions: unbound_PracticeSession[];
+    readonly [RelationKeys]?: 'kits' | 'practiceSessions';
   };
   export type unbound_Kit = {
     _id: CodecTypes['mongo/objectId@1']['output'];
@@ -315,8 +337,11 @@ export namespace Models {
     researchedAt: CodecTypes['mongo/date@1']['output'] | null;
     briefSummary: CodecTypes['mongo/string@1']['output'] | null;
     briefWhatTheyDo: CodecTypes['mongo/string@1']['output'] | null;
+    briefState: 'GENERATED' | 'EDITED' | 'PINNED' | null;
     roleTitle: CodecTypes['mongo/string@1']['output'] | null;
     roleSeniority: CodecTypes['mongo/string@1']['output'] | null;
+    research: CodecTypes['mongo/string@1']['output'] | null;
+    scheduleStale: CodecTypes['mongo/bool@1']['output'] | null;
     status:
       | 'PENDING'
       | 'RUNNING'
@@ -344,6 +369,7 @@ export namespace Models {
     questions: unbound_Question[];
     flashcards: unbound_Flashcard[];
     scheduleDays: unbound_ScheduleDay[];
+    practiceSessions: unbound_PracticeSession[];
     readonly [RelationKeys]?:
       | 'user'
       | 'pagesUsed'
@@ -354,7 +380,8 @@ export namespace Models {
       | 'requirements'
       | 'questions'
       | 'flashcards'
-      | 'scheduleDays';
+      | 'scheduleDays'
+      | 'practiceSessions';
   };
   export type unbound_KitPage = {
     _id: CodecTypes['mongo/objectId@1']['output'];
@@ -470,15 +497,27 @@ export namespace Models {
     question: unbound_Question;
     readonly [RelationKeys]?: 'scheduleDay' | 'question';
   };
-  export type unbound_PracticeAttempt = {
+  export type unbound_PracticeSession = {
     _id: CodecTypes['mongo/objectId@1']['output'];
     userId: CodecTypes['mongo/string@1']['output'];
-    flashcardId: CodecTypes['mongo/string@1']['output'];
-    confidence: CodecTypes['mongo/int32@1']['output'];
-    attemptedAt: CodecTypes['mongo/date@1']['output'];
+    kitId: CodecTypes['mongo/string@1']['output'];
+    startedAt: CodecTypes['mongo/date@1']['output'];
+    endedAt: CodecTypes['mongo/date@1']['output'] | null;
     user: unbound_User;
+    kit: unbound_Kit;
+    attempts: unbound_PracticeAttempt[];
+    readonly [RelationKeys]?: 'user' | 'kit' | 'attempts';
+  };
+  export type unbound_PracticeAttempt = {
+    _id: CodecTypes['mongo/objectId@1']['output'];
+    sessionId: CodecTypes['mongo/string@1']['output'];
+    flashcardId: CodecTypes['mongo/string@1']['output'];
+    confidence: CodecTypes['mongo/int32@1']['output'] | null;
+    skipped: CodecTypes['mongo/bool@1']['output'] | null;
+    attemptedAt: CodecTypes['mongo/date@1']['output'];
+    session: unbound_PracticeSession;
     flashcard: unbound_Flashcard;
-    readonly [RelationKeys]?: 'user' | 'flashcard';
+    readonly [RelationKeys]?: 'session' | 'flashcard';
   };
 }
 
@@ -498,6 +537,7 @@ export declare const models: {
     FlashcardRequirement: Models.unbound_FlashcardRequirement;
     ScheduleDay: Models.unbound_ScheduleDay;
     ScheduleDayQuestion: Models.unbound_ScheduleDayQuestion;
+    PracticeSession: Models.unbound_PracticeSession;
     PracticeAttempt: Models.unbound_PracticeAttempt;
   };
 };
@@ -621,8 +661,14 @@ type ContractBase = Omit<
                     readonly researchedAt: { readonly bsonType: readonly ['null', 'date'] };
                     readonly briefSummary: { readonly bsonType: readonly ['null', 'string'] };
                     readonly briefWhatTheyDo: { readonly bsonType: readonly ['null', 'string'] };
+                    readonly briefState: {
+                      readonly bsonType: readonly ['null', 'string'];
+                      readonly enum: readonly ['GENERATED', 'EDITED', 'PINNED', null];
+                    };
                     readonly roleTitle: { readonly bsonType: readonly ['null', 'string'] };
                     readonly roleSeniority: { readonly bsonType: readonly ['null', 'string'] };
+                    readonly research: { readonly bsonType: readonly ['null', 'string'] };
+                    readonly scheduleStale: { readonly bsonType: readonly ['null', 'bool'] };
                     readonly status: {
                       readonly bsonType: 'string';
                       readonly enum: readonly [
@@ -684,6 +730,10 @@ type ContractBase = Omit<
               readonly indexes: readonly [
                 {
                   readonly kind: 'mongo-index';
+                  readonly keys: readonly [{ readonly field: 'sessionId'; readonly direction: 1 }];
+                },
+                {
+                  readonly kind: 'mongo-index';
                   readonly keys: readonly [
                     { readonly field: 'flashcardId'; readonly direction: 1 },
                   ];
@@ -695,19 +745,43 @@ type ContractBase = Omit<
                   readonly bsonType: 'object';
                   readonly properties: {
                     readonly _id: { readonly bsonType: 'objectId' };
-                    readonly userId: { readonly bsonType: 'string' };
+                    readonly sessionId: { readonly bsonType: 'string' };
                     readonly flashcardId: { readonly bsonType: 'string' };
-                    readonly confidence: { readonly bsonType: 'int' };
+                    readonly confidence: { readonly bsonType: readonly ['null', 'int'] };
+                    readonly skipped: { readonly bsonType: readonly ['null', 'bool'] };
                     readonly attemptedAt: { readonly bsonType: 'date' };
                   };
                   readonly additionalProperties: false;
-                  readonly required: readonly [
-                    '_id',
-                    'attemptedAt',
-                    'confidence',
-                    'flashcardId',
-                    'userId',
+                  readonly required: readonly ['_id', 'attemptedAt', 'flashcardId', 'sessionId'];
+                };
+                readonly validationLevel: 'strict';
+                readonly validationAction: 'error';
+              };
+            };
+            readonly practiceSession: {
+              readonly kind: 'mongo-collection';
+              readonly indexes: readonly [
+                {
+                  readonly kind: 'mongo-index';
+                  readonly keys: readonly [
+                    { readonly field: 'userId'; readonly direction: 1 },
+                    { readonly field: 'kitId'; readonly direction: 1 },
                   ];
+                },
+              ];
+              readonly validator: {
+                readonly kind: 'mongo-validator';
+                readonly jsonSchema: {
+                  readonly bsonType: 'object';
+                  readonly properties: {
+                    readonly _id: { readonly bsonType: 'objectId' };
+                    readonly userId: { readonly bsonType: 'string' };
+                    readonly kitId: { readonly bsonType: 'string' };
+                    readonly startedAt: { readonly bsonType: 'date' };
+                    readonly endedAt: { readonly bsonType: readonly ['null', 'date'] };
+                  };
+                  readonly additionalProperties: false;
+                  readonly required: readonly ['_id', 'kitId', 'startedAt', 'userId'];
                 };
                 readonly validationLevel: 'strict';
                 readonly validationAction: 'error';
@@ -1038,6 +1112,10 @@ type ContractBase = Omit<
       readonly namespace: '__unbound__' & NamespaceId;
       readonly model: 'ScheduleDayQuestion';
     };
+    readonly practiceSession: {
+      readonly namespace: '__unbound__' & NamespaceId;
+      readonly model: 'PracticeSession';
+    };
     readonly practiceAttempt: {
       readonly namespace: '__unbound__' & NamespaceId;
       readonly model: 'PracticeAttempt';
@@ -1244,6 +1322,10 @@ type ContractBase = Omit<
                 readonly nullable: true;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'mongo/string@1' };
               };
+              readonly briefState: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'mongo/string@1' };
+              };
               readonly roleTitle: {
                 readonly nullable: true;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'mongo/string@1' };
@@ -1251,6 +1333,14 @@ type ContractBase = Omit<
               readonly roleSeniority: {
                 readonly nullable: true;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'mongo/string@1' };
+              };
+              readonly research: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'mongo/string@1' };
+              };
+              readonly scheduleStale: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'mongo/bool@1' };
               };
               readonly status: {
                 readonly nullable: false;
@@ -1393,6 +1483,17 @@ type ContractBase = Omit<
                   readonly targetFields: readonly ['kitId'];
                 };
               };
+              readonly practiceSessions: {
+                readonly to: {
+                  readonly namespace: '__unbound__' & NamespaceId;
+                  readonly model: 'PracticeSession';
+                };
+                readonly cardinality: '1:N';
+                readonly on: {
+                  readonly localFields: readonly ['_id'];
+                  readonly targetFields: readonly ['kitId'];
+                };
+              };
             };
             readonly storage: { readonly collection: 'kit' };
           };
@@ -1433,7 +1534,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'mongo/objectId@1' };
               };
-              readonly userId: {
+              readonly sessionId: {
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'mongo/string@1' };
               };
@@ -1442,8 +1543,12 @@ type ContractBase = Omit<
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'mongo/string@1' };
               };
               readonly confidence: {
-                readonly nullable: false;
+                readonly nullable: true;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'mongo/int32@1' };
+              };
+              readonly skipped: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'mongo/bool@1' };
               };
               readonly attemptedAt: {
                 readonly nullable: false;
@@ -1451,15 +1556,15 @@ type ContractBase = Omit<
               };
             };
             readonly relations: {
-              readonly user: {
+              readonly session: {
                 readonly to: {
                   readonly namespace: '__unbound__' & NamespaceId;
-                  readonly model: 'User';
+                  readonly model: 'PracticeSession';
                 };
                 readonly cardinality: 'N:1';
                 readonly nullable: false;
                 readonly on: {
-                  readonly localFields: readonly ['userId'];
+                  readonly localFields: readonly ['sessionId'];
                   readonly targetFields: readonly ['_id'];
                 };
               };
@@ -1477,6 +1582,68 @@ type ContractBase = Omit<
               };
             };
             readonly storage: { readonly collection: 'practiceAttempt' };
+          };
+          readonly PracticeSession: {
+            readonly fields: {
+              readonly _id: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'mongo/objectId@1' };
+              };
+              readonly userId: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'mongo/string@1' };
+              };
+              readonly kitId: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'mongo/string@1' };
+              };
+              readonly startedAt: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'mongo/date@1' };
+              };
+              readonly endedAt: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'mongo/date@1' };
+              };
+            };
+            readonly relations: {
+              readonly user: {
+                readonly to: {
+                  readonly namespace: '__unbound__' & NamespaceId;
+                  readonly model: 'User';
+                };
+                readonly cardinality: 'N:1';
+                readonly nullable: false;
+                readonly on: {
+                  readonly localFields: readonly ['userId'];
+                  readonly targetFields: readonly ['_id'];
+                };
+              };
+              readonly kit: {
+                readonly to: {
+                  readonly namespace: '__unbound__' & NamespaceId;
+                  readonly model: 'Kit';
+                };
+                readonly cardinality: 'N:1';
+                readonly nullable: false;
+                readonly on: {
+                  readonly localFields: readonly ['kitId'];
+                  readonly targetFields: readonly ['_id'];
+                };
+              };
+              readonly attempts: {
+                readonly to: {
+                  readonly namespace: '__unbound__' & NamespaceId;
+                  readonly model: 'PracticeAttempt';
+                };
+                readonly cardinality: '1:N';
+                readonly on: {
+                  readonly localFields: readonly ['_id'];
+                  readonly targetFields: readonly ['sessionId'];
+                };
+              };
+            };
+            readonly storage: { readonly collection: 'practiceSession' };
           };
           readonly Question: {
             readonly fields: {
@@ -1904,10 +2071,10 @@ type ContractBase = Omit<
                   readonly targetFields: readonly ['userId'];
                 };
               };
-              readonly attempts: {
+              readonly practiceSessions: {
                 readonly to: {
                   readonly namespace: '__unbound__' & NamespaceId;
-                  readonly model: 'PracticeAttempt';
+                  readonly model: 'PracticeSession';
                 };
                 readonly cardinality: '1:N';
                 readonly on: {

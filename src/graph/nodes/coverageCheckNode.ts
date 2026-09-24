@@ -1,13 +1,7 @@
 import type { GeneratedQuestion, Requirement } from '../../types/kit';
+import { checkCoverage } from '../../services/kit/checkCoverage';
 
 export const MAX_COVERAGE_PASSES = 3;
-
-function checkCoverage(requirements: Requirement[], questions: GeneratedQuestion[]): string[] {
-  const covered = new Set(questions.flatMap((q) => q.requirement_ids));
-  return requirements
-    .filter((r) => r.priority === 'must' && !covered.has(r.id))
-    .map((r) => r.id);
-}
 
 export async function coverageCheckNode(state: {
   role: { requirements: Requirement[] } | null;
@@ -22,7 +16,6 @@ export async function coverageCheckNode(state: {
 
   return {
     uncoveredRequirementIds,
-    // don't increment here — increment happens in generateGapQuestionsNode
     coveragePasses: state.coveragePasses,
   };
 }

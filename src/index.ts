@@ -2,6 +2,8 @@ import express from "express";
 import dotenv from "dotenv";
 import authRouter from "./routes/auth";
 import kitsRouter from "./routes/kits";
+import builderRouter from "./routes/builder";
+import practiceRouter from "./routes/practice";
 import cors from "cors";
 
 dotenv.config();
@@ -23,6 +25,8 @@ app.use(express.json());
 
 app.use("/api/auth", authRouter);
 app.use("/api", kitsRouter);
+app.use("/api", builderRouter);
+app.use("/api", practiceRouter);
 
 app.get("/", (req, res) => {
   res.send("Hi");

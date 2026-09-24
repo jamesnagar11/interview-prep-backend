@@ -1,13 +1,13 @@
 // use prisma-8
 
 model User {
-  id           ObjectId @id @map("_id")
-  name         String
-  email        String   @unique
-  passwordHash String
-  createdAt    DateTime
-  kits         Kit[]
-  attempts     PracticeAttempt[]
+  id               ObjectId          @id @map("_id")
+  name             String
+  email            String            @unique
+  passwordHash     String
+  createdAt        DateTime
+  kits             Kit[]
+  practiceSessions PracticeSession[]
 }
 
 model Kit {
@@ -31,10 +31,17 @@ model Kit {
   // company_brief
   briefSummary    String?
   briefWhatTheyDo String?
+  briefState      ItemState?
 
   // top-level role fields
   roleTitle     String?
   roleSeniority String?
+
+  // research bundle persisted for regeneration (JSON stringified)
+  research      String?
+
+  // Builder schedule staleness flag
+  scheduleStale Boolean?
 
   status        KitStatus
   failureReason String?
@@ -50,11 +57,12 @@ model Kit {
   responsibilities      Responsibility[]
   uncoveredRequirements UncoveredRequirement[]
 
-  sourcePages   SourcePage[]
-  requirements  Requirement[]
-  questions     Question[]
-  flashcards    Flashcard[]
-  scheduleDays  ScheduleDay[]
+  sourcePages      SourcePage[]
+  requirements     Requirement[]
+  questions        Question[]
+  flashcards       Flashcard[]
+  scheduleDays     ScheduleDay[]
+  practiceSessions PracticeSession[]
 
   @@index([userId])
   @@index([dedupeHash])
@@ -209,14 +217,29 @@ model ScheduleDayQuestion {
   @@unique([scheduleDayId, questionId])
 }
 
+model PracticeSession {
+  id        ObjectId @id @map("_id")
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  kitId     String
+  kit       Kit      @relation(fields: [kitId], references: [id])
+  startedAt DateTime
+  endedAt   DateTime?
+  attempts  PracticeAttempt[]
+
+  @@index([userId, kitId])
+}
+
 model PracticeAttempt {
-  id          ObjectId  @id @map("_id")
-  userId      String
-  user        User      @relation(fields: [userId], references: [id])
+  id          ObjectId        @id @map("_id")
+  sessionId   String
+  session     PracticeSession @relation(fields: [sessionId], references: [id])
   flashcardId String
-  flashcard   Flashcard @relation(fields: [flashcardId], references: [id])
-  confidence  Int       // e.g. 1 (low) – 10 (high)
+  flashcard   Flashcard       @relation(fields: [flashcardId], references: [id])
+  confidence  Int?            // e.g. 1 (low) – 10 (high), null if skipped
+  skipped     Boolean?
   attemptedAt DateTime
 
+  @@index([sessionId])
   @@index([flashcardId])
 }

@@ -39,6 +39,8 @@ export interface GeneratedQuestion {
   prompt: string;
   answer_outline: string;
   difficulty: 1 | 2 | 3;
+  state?: 'GENERATED' | 'EDITED' | 'PINNED';
+  orderIndex?: number;
 }
 
 export interface GeneratedFlashcard {
@@ -46,6 +48,8 @@ export interface GeneratedFlashcard {
   front: string;
   back: string;
   requirement_ids: string[];
+  state?: 'GENERATED' | 'EDITED' | 'PINNED';
+  orderIndex?: number;
 }
 
 export interface CompanyBrief {

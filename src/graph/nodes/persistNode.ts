@@ -1,4 +1,4 @@
-import type { AppendixAKit } from '../../types/kit';
+import type { AppendixAKit, ResearchBundle } from '../../types/kit';
 import { db } from '../../prisma/db';
 
 /**
@@ -12,8 +12,9 @@ import { db } from '../../prisma/db';
 export async function persistNode(state: {
   kitId: string;
   finalKit: AppendixAKit | null;
+  research: ResearchBundle | null;
 }): Promise<Record<string, never>> {
-  const { kitId, finalKit } = state;
+  const { kitId, finalKit, research } = state;
 
   if (!finalKit) {
     throw new Error('persistNode: finalKit is null — validateNode must have failed silently');
@@ -157,6 +158,9 @@ export async function persistNode(state: {
     researchedAt: new Date(finalKit.source.researched_at),
     briefSummary: finalKit.company_brief.summary,
     briefWhatTheyDo: finalKit.company_brief.what_they_do,
+    briefState: 'GENERATED' as any,
+    research: research ? JSON.stringify(research) : null,
+    scheduleStale: false as any,
     roleTitle: finalKit.role.title,
     roleSeniority: finalKit.role.seniority,
     jdChars: finalKit.source.jd_chars,

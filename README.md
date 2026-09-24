@@ -67,3 +67,26 @@ If the company's hiring process page was successfully crawled, its text is inclu
 
 #### Idempotency / deduplication
 `POST /api/kits` hashes `jd + companyUrl` and skips creating a new kit if one with the same hash and a non-failed status already exists for that user. The full kit data is stored in `Kit.result` (JSON) for replay on SSE reconnect and for `GET /api/kits/:id` direct navigation.
+
+---
+
+### Iteration 03 design decisions — Builder + Practice Mode
+
+#### `ItemState` tri-state (`GENERATED` / `EDITED` / `PINNED`)
+The `ItemState` tri-state solves the partial-regeneration state protection problem:
+- `GENERATED`: untouched model output, eligible for replacement on category regeneration.
+- `EDITED`: content modified by user, preserved across category regenerations.
+- `PINNED`: explicitly locked by user, preserved across category regenerations and excluded from auto-replacement pools.
+When regenerating a question category, the handler splits existing questions into `keep` (`EDITED` or `PINNED`) and `replace` (`GENERATED`). Only the `replace` set is deleted and replaced with new LLM output.
+
+#### Confidence-weighted resort vs SM-2 algorithm
+For practice flashcard queueing, a confidence-weighted resort algorithm with staleness check was chosen over full SM-2/Anki-style interval scheduling:
+- SM-2 requires interval compounding across long-term review cycles, whereas prep kits are focused on short-term interview preparation (a few days to weeks).
+- Confidence-weighted resort prioritizes unseen/skipped cards first (sorted by must-have requirement priority), followed by rated cards sorted by lowest confidence score.
+- Flashcard edits/staleness dynamically reset cards to the unseen bucket.
+
+#### Synchronous regeneration
+Regeneration endpoints (`brief`, question category, `schedule`) run synchronously within standard HTTP requests rather than queued background jobs. Since single-category or brief calls are fast single LLM interactions (~2-5 seconds), standard request-response with loading indicators provides a simpler, lower-overhead UX.
+
+#### `scheduleStale` flag mechanics
+Structural edits to questions (creating, deleting, category updating, or altering questions present in schedule slots) flip `Kit.scheduleStale = true`. This flags to the UI that a schedule re-alignment is recommended. Regenerating the schedule or manually editing the schedule resets `scheduleStale = false`.

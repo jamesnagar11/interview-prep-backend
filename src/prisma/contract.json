@@ -28,6 +28,10 @@
       "model": "PracticeAttempt",
       "namespace": "__unbound__"
     },
+    "practiceSession": {
+      "model": "PracticeSession",
+      "namespace": "__unbound__"
+    },
     "question": {
       "model": "Question",
       "namespace": "__unbound__"
@@ -360,6 +364,19 @@
                   "kind": "scalar"
                 }
               },
+              "briefState": {
+                "nullable": true,
+                "type": {
+                  "codecId": "mongo/string@1",
+                  "kind": "scalar"
+                },
+                "valueSet": {
+                  "entityKind": "enum",
+                  "entityName": "ItemState",
+                  "namespaceId": "__unbound__",
+                  "plane": "domain"
+                }
+              },
               "briefSummary": {
                 "nullable": true,
                 "type": {
@@ -451,6 +468,13 @@
                   "kind": "scalar"
                 }
               },
+              "research": {
+                "nullable": true,
+                "type": {
+                  "codecId": "mongo/string@1",
+                  "kind": "scalar"
+                }
+              },
               "researchedAt": {
                 "nullable": true,
                 "type": {
@@ -483,6 +507,13 @@
                 "nullable": true,
                 "type": {
                   "codecId": "mongo/string@1",
+                  "kind": "scalar"
+                }
+              },
+              "scheduleStale": {
+                "nullable": true,
+                "type": {
+                  "codecId": "mongo/bool@1",
                   "kind": "scalar"
                 }
               },
@@ -557,6 +588,21 @@
                 },
                 "to": {
                   "model": "KitPage",
+                  "namespace": "__unbound__"
+                }
+              },
+              "practiceSessions": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "_id"
+                  ],
+                  "targetFields": [
+                    "kitId"
+                  ]
+                },
+                "to": {
+                  "model": "PracticeSession",
                   "namespace": "__unbound__"
                 }
               },
@@ -734,7 +780,7 @@
                 }
               },
               "confidence": {
-                "nullable": false,
+                "nullable": true,
                 "type": {
                   "codecId": "mongo/int32@1",
                   "kind": "scalar"
@@ -747,10 +793,17 @@
                   "kind": "scalar"
                 }
               },
-              "userId": {
+              "sessionId": {
                 "nullable": false,
                 "type": {
                   "codecId": "mongo/string@1",
+                  "kind": "scalar"
+                }
+              },
+              "skipped": {
+                "nullable": true,
+                "type": {
+                  "codecId": "mongo/bool@1",
                   "kind": "scalar"
                 }
               }
@@ -772,6 +825,97 @@
                   "namespace": "__unbound__"
                 }
               },
+              "session": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "sessionId"
+                  ],
+                  "targetFields": [
+                    "_id"
+                  ]
+                },
+                "to": {
+                  "model": "PracticeSession",
+                  "namespace": "__unbound__"
+                }
+              }
+            },
+            "storage": {
+              "collection": "practiceAttempt"
+            }
+          },
+          "PracticeSession": {
+            "fields": {
+              "_id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "mongo/objectId@1",
+                  "kind": "scalar"
+                }
+              },
+              "endedAt": {
+                "nullable": true,
+                "type": {
+                  "codecId": "mongo/date@1",
+                  "kind": "scalar"
+                }
+              },
+              "kitId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "mongo/string@1",
+                  "kind": "scalar"
+                }
+              },
+              "startedAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "mongo/date@1",
+                  "kind": "scalar"
+                }
+              },
+              "userId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "mongo/string@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "attempts": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "_id"
+                  ],
+                  "targetFields": [
+                    "sessionId"
+                  ]
+                },
+                "to": {
+                  "model": "PracticeAttempt",
+                  "namespace": "__unbound__"
+                }
+              },
+              "kit": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "kitId"
+                  ],
+                  "targetFields": [
+                    "_id"
+                  ]
+                },
+                "to": {
+                  "model": "Kit",
+                  "namespace": "__unbound__"
+                }
+              },
               "user": {
                 "cardinality": "N:1",
                 "nullable": false,
@@ -790,7 +934,7 @@
               }
             },
             "storage": {
-              "collection": "practiceAttempt"
+              "collection": "practiceSession"
             }
           },
           "Question": {
@@ -1425,21 +1569,6 @@
               }
             },
             "relations": {
-              "attempts": {
-                "cardinality": "1:N",
-                "on": {
-                  "localFields": [
-                    "_id"
-                  ],
-                  "targetFields": [
-                    "userId"
-                  ]
-                },
-                "to": {
-                  "model": "PracticeAttempt",
-                  "namespace": "__unbound__"
-                }
-              },
               "kits": {
                 "cardinality": "1:N",
                 "on": {
@@ -1452,6 +1581,21 @@
                 },
                 "to": {
                   "model": "Kit",
+                  "namespace": "__unbound__"
+                }
+              },
+              "practiceSessions": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "_id"
+                  ],
+                  "targetFields": [
+                    "userId"
+                  ]
+                },
+                "to": {
+                  "model": "PracticeSession",
                   "namespace": "__unbound__"
                 }
               }
@@ -1620,6 +1764,18 @@
                     "_id": {
                       "bsonType": "objectId"
                     },
+                    "briefState": {
+                      "bsonType": [
+                        "null",
+                        "string"
+                      ],
+                      "enum": [
+                        "GENERATED",
+                        "EDITED",
+                        "PINNED",
+                        null
+                      ]
+                    },
                     "briefSummary": {
                       "bsonType": [
                         "null",
@@ -1686,6 +1842,12 @@
                         "string"
                       ]
                     },
+                    "research": {
+                      "bsonType": [
+                        "null",
+                        "string"
+                      ]
+                    },
                     "researchedAt": {
                       "bsonType": [
                         "null",
@@ -1714,6 +1876,12 @@
                       "bsonType": [
                         "null",
                         "string"
+                      ]
+                    },
+                    "scheduleStale": {
+                      "bsonType": [
+                        "null",
+                        "bool"
                       ]
                     },
                     "status": {
@@ -1788,6 +1956,15 @@
                   "keys": [
                     {
                       "direction": 1,
+                      "field": "sessionId"
+                    }
+                  ],
+                  "kind": "mongo-index"
+                },
+                {
+                  "keys": [
+                    {
+                      "direction": 1,
                       "field": "flashcardId"
                     }
                   ],
@@ -1807,10 +1984,72 @@
                       "bsonType": "date"
                     },
                     "confidence": {
-                      "bsonType": "int"
+                      "bsonType": [
+                        "null",
+                        "int"
+                      ]
                     },
                     "flashcardId": {
                       "bsonType": "string"
+                    },
+                    "sessionId": {
+                      "bsonType": "string"
+                    },
+                    "skipped": {
+                      "bsonType": [
+                        "null",
+                        "bool"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "_id",
+                    "attemptedAt",
+                    "flashcardId",
+                    "sessionId"
+                  ]
+                },
+                "kind": "mongo-validator",
+                "validationAction": "error",
+                "validationLevel": "strict"
+              }
+            },
+            "practiceSession": {
+              "indexes": [
+                {
+                  "keys": [
+                    {
+                      "direction": 1,
+                      "field": "userId"
+                    },
+                    {
+                      "direction": 1,
+                      "field": "kitId"
+                    }
+                  ],
+                  "kind": "mongo-index"
+                }
+              ],
+              "kind": "mongo-collection",
+              "validator": {
+                "jsonSchema": {
+                  "additionalProperties": false,
+                  "bsonType": "object",
+                  "properties": {
+                    "_id": {
+                      "bsonType": "objectId"
+                    },
+                    "endedAt": {
+                      "bsonType": [
+                        "null",
+                        "date"
+                      ]
+                    },
+                    "kitId": {
+                      "bsonType": "string"
+                    },
+                    "startedAt": {
+                      "bsonType": "date"
                     },
                     "userId": {
                       "bsonType": "string"
@@ -1818,9 +2057,8 @@
                   },
                   "required": [
                     "_id",
-                    "attemptedAt",
-                    "confidence",
-                    "flashcardId",
+                    "kitId",
+                    "startedAt",
                     "userId"
                   ]
                 },
@@ -2283,7 +2521,7 @@
         "kind": "mongo-database"
       }
     },
-    "storageHash": "9147e09435f09b79b26a17319af15690ba18323ee1c2864283c3f756bc847ad2"
+    "storageHash": "4d92e6d9da6bc2d0e72d67d40ede9606b424278e7e684386988d068cc38710b7"
   },
   "capabilities": {},
   "extensions": {},

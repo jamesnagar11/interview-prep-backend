@@ -18,6 +18,46 @@ const createKitSchema = z.object({
   days: z.number().int().min(1).max(70, 'Maximum 70 days supported'),
 });
 
+// GET /api/kits — list all kits for the authenticated user (lightweight summary)
+router.get('/kits', isAuth, async (req: Request, res: Response) => {
+  const userId = req.user?.userId;
+  if (!userId) return res.status(401).json({ success: false, msg: 'Unauthorized' });
+
+  try {
+    const kits = await db.orm.kit.where({ userId } as any).all();
+    // Sort descending by createdAt
+    const sorted = [...kits].sort(
+      (a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+
+    const summaries = await Promise.all(
+      sorted.map(async (k: any) => {
+        const kitId = k._id.toString();
+        let questionCount = 0;
+        try {
+          const qs = await db.orm.question.where({ kitId }).all();
+          questionCount = qs.length;
+        } catch {}
+
+        return {
+          id: kitId,
+          roleTitle: k.roleTitle || k.role || null,
+          companyName: k.companyName || null,
+          companyUrl: k.companyUrl,
+          status: k.status,
+          createdAt: k.createdAt,
+          daysAvailable: k.daysAvailable,
+          questionCount,
+        };
+      })
+    );
+
+    return res.status(200).json({ success: true, kits: summaries });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, msg: err.message || 'Server error' });
+  }
+});
+
 // POST /api/kits
 router.post('/kits', isAuth, async (req: Request, res: Response) => {
   const parsed = createKitSchema.safeParse(req.body);
@@ -105,7 +145,12 @@ router.get('/kits/:id', isAuth, async (req: Request, res: Response) => {
       return res.status(500).json({ success: false, msg: 'Failed to parse kit result' });
     }
 
-    return res.status(200).json({ status: 'READY', kit: result });
+    return res.status(200).json({
+      status: 'READY',
+      kit: result,
+      scheduleStale: Boolean((kit as any).scheduleStale),
+      briefState: (kit as any).briefState || 'GENERATED',
+    });
   } catch (err: any) {
     return res.status(500).json({ success: false, msg: err.message || 'Server error' });
   }
