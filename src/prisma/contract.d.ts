@@ -18,7 +18,7 @@ import type {
 } from '@prisma/orm-mongo/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'0100b924e4cb8566da657aa59828bd6301bcd76035547be9398fcb7925060c83'>;
+  StorageHashBase<'9147e09435f09b79b26a17319af15690ba18323ee1c2864283c3f756bc847ad2'>;
 export type ExecutionHash = ExecutionHashBase<string>;
 export type ProfileHash =
   ProfileHashBase<'251b3ce23f6c9f561892e7c1af9d2cc941a13d64ba1aa7226b90036b09568cc3'>;
@@ -49,11 +49,11 @@ export type FieldOutputTypes = {
     readonly Kit: {
       readonly _id: CodecTypes['mongo/objectId@1']['output'];
       readonly userId: CodecTypes['mongo/string@1']['output'];
-      readonly dedupeHash: CodecTypes['mongo/string@1']['output'];
+      readonly dedupeHash: CodecTypes['mongo/string@1']['output'] | null;
       readonly companyName: CodecTypes['mongo/string@1']['output'] | null;
       readonly companyUrl: CodecTypes['mongo/string@1']['output'];
       readonly jdText: CodecTypes['mongo/string@1']['output'];
-      readonly jdChars: CodecTypes['mongo/int32@1']['output'];
+      readonly jdChars: CodecTypes['mongo/int32@1']['output'] | null;
       readonly role: CodecTypes['mongo/string@1']['output'] | null;
       readonly location: CodecTypes['mongo/string@1']['output'] | null;
       readonly daysAvailable: CodecTypes['mongo/int32@1']['output'];
@@ -63,6 +63,8 @@ export type FieldOutputTypes = {
       readonly roleTitle: CodecTypes['mongo/string@1']['output'] | null;
       readonly roleSeniority: CodecTypes['mongo/string@1']['output'] | null;
       readonly status:
+        | 'PENDING'
+        | 'RUNNING'
         | 'DRAFT'
         | 'RESEARCHING'
         | 'EXTRACTING'
@@ -72,7 +74,9 @@ export type FieldOutputTypes = {
         | 'READY'
         | 'FAILED';
       readonly failureReason: CodecTypes['mongo/string@1']['output'] | null;
-      readonly coveragePasses: CodecTypes['mongo/int32@1']['output'];
+      readonly errorMessage: CodecTypes['mongo/string@1']['output'] | null;
+      readonly result: CodecTypes['mongo/string@1']['output'] | null;
+      readonly coveragePasses: CodecTypes['mongo/int32@1']['output'] | null;
       readonly createdAt: CodecTypes['mongo/date@1']['output'];
       readonly updatedAt: CodecTypes['mongo/date@1']['output'];
     };
@@ -177,11 +181,11 @@ export type FieldInputTypes = {
     readonly Kit: {
       readonly _id: CodecTypes['mongo/objectId@1']['input'];
       readonly userId: CodecTypes['mongo/string@1']['input'];
-      readonly dedupeHash: CodecTypes['mongo/string@1']['input'];
+      readonly dedupeHash: CodecTypes['mongo/string@1']['input'] | null;
       readonly companyName: CodecTypes['mongo/string@1']['input'] | null;
       readonly companyUrl: CodecTypes['mongo/string@1']['input'];
       readonly jdText: CodecTypes['mongo/string@1']['input'];
-      readonly jdChars: CodecTypes['mongo/int32@1']['input'];
+      readonly jdChars: CodecTypes['mongo/int32@1']['input'] | null;
       readonly role: CodecTypes['mongo/string@1']['input'] | null;
       readonly location: CodecTypes['mongo/string@1']['input'] | null;
       readonly daysAvailable: CodecTypes['mongo/int32@1']['input'];
@@ -191,6 +195,8 @@ export type FieldInputTypes = {
       readonly roleTitle: CodecTypes['mongo/string@1']['input'] | null;
       readonly roleSeniority: CodecTypes['mongo/string@1']['input'] | null;
       readonly status:
+        | 'PENDING'
+        | 'RUNNING'
         | 'DRAFT'
         | 'RESEARCHING'
         | 'EXTRACTING'
@@ -200,7 +206,9 @@ export type FieldInputTypes = {
         | 'READY'
         | 'FAILED';
       readonly failureReason: CodecTypes['mongo/string@1']['input'] | null;
-      readonly coveragePasses: CodecTypes['mongo/int32@1']['input'];
+      readonly errorMessage: CodecTypes['mongo/string@1']['input'] | null;
+      readonly result: CodecTypes['mongo/string@1']['input'] | null;
+      readonly coveragePasses: CodecTypes['mongo/int32@1']['input'] | null;
       readonly createdAt: CodecTypes['mongo/date@1']['input'];
       readonly updatedAt: CodecTypes['mongo/date@1']['input'];
     };
@@ -296,11 +304,11 @@ export namespace Models {
   export type unbound_Kit = {
     _id: CodecTypes['mongo/objectId@1']['output'];
     userId: CodecTypes['mongo/string@1']['output'];
-    dedupeHash: CodecTypes['mongo/string@1']['output'];
+    dedupeHash: CodecTypes['mongo/string@1']['output'] | null;
     companyName: CodecTypes['mongo/string@1']['output'] | null;
     companyUrl: CodecTypes['mongo/string@1']['output'];
     jdText: CodecTypes['mongo/string@1']['output'];
-    jdChars: CodecTypes['mongo/int32@1']['output'];
+    jdChars: CodecTypes['mongo/int32@1']['output'] | null;
     role: CodecTypes['mongo/string@1']['output'] | null;
     location: CodecTypes['mongo/string@1']['output'] | null;
     daysAvailable: CodecTypes['mongo/int32@1']['output'];
@@ -310,6 +318,8 @@ export namespace Models {
     roleTitle: CodecTypes['mongo/string@1']['output'] | null;
     roleSeniority: CodecTypes['mongo/string@1']['output'] | null;
     status:
+      | 'PENDING'
+      | 'RUNNING'
       | 'DRAFT'
       | 'RESEARCHING'
       | 'EXTRACTING'
@@ -319,7 +329,9 @@ export namespace Models {
       | 'READY'
       | 'FAILED';
     failureReason: CodecTypes['mongo/string@1']['output'] | null;
-    coveragePasses: CodecTypes['mongo/int32@1']['output'];
+    errorMessage: CodecTypes['mongo/string@1']['output'] | null;
+    result: CodecTypes['mongo/string@1']['output'] | null;
+    coveragePasses: CodecTypes['mongo/int32@1']['output'] | null;
     createdAt: CodecTypes['mongo/date@1']['output'];
     updatedAt: CodecTypes['mongo/date@1']['output'];
     user: unbound_User;
@@ -598,11 +610,11 @@ type ContractBase = Omit<
                   readonly properties: {
                     readonly _id: { readonly bsonType: 'objectId' };
                     readonly userId: { readonly bsonType: 'string' };
-                    readonly dedupeHash: { readonly bsonType: 'string' };
+                    readonly dedupeHash: { readonly bsonType: readonly ['null', 'string'] };
                     readonly companyName: { readonly bsonType: readonly ['null', 'string'] };
                     readonly companyUrl: { readonly bsonType: 'string' };
                     readonly jdText: { readonly bsonType: 'string' };
-                    readonly jdChars: { readonly bsonType: 'int' };
+                    readonly jdChars: { readonly bsonType: readonly ['null', 'int'] };
                     readonly role: { readonly bsonType: readonly ['null', 'string'] };
                     readonly location: { readonly bsonType: readonly ['null', 'string'] };
                     readonly daysAvailable: { readonly bsonType: 'int' };
@@ -614,6 +626,8 @@ type ContractBase = Omit<
                     readonly status: {
                       readonly bsonType: 'string';
                       readonly enum: readonly [
+                        'PENDING',
+                        'RUNNING',
                         'DRAFT',
                         'RESEARCHING',
                         'EXTRACTING',
@@ -625,7 +639,9 @@ type ContractBase = Omit<
                       ];
                     };
                     readonly failureReason: { readonly bsonType: readonly ['null', 'string'] };
-                    readonly coveragePasses: { readonly bsonType: 'int' };
+                    readonly errorMessage: { readonly bsonType: readonly ['null', 'string'] };
+                    readonly result: { readonly bsonType: readonly ['null', 'string'] };
+                    readonly coveragePasses: { readonly bsonType: readonly ['null', 'int'] };
                     readonly createdAt: { readonly bsonType: 'date' };
                     readonly updatedAt: { readonly bsonType: 'date' };
                   };
@@ -633,11 +649,8 @@ type ContractBase = Omit<
                   readonly required: readonly [
                     '_id',
                     'companyUrl',
-                    'coveragePasses',
                     'createdAt',
                     'daysAvailable',
-                    'dedupeHash',
-                    'jdChars',
                     'jdText',
                     'status',
                     'updatedAt',
@@ -1188,7 +1201,7 @@ type ContractBase = Omit<
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'mongo/string@1' };
               };
               readonly dedupeHash: {
-                readonly nullable: false;
+                readonly nullable: true;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'mongo/string@1' };
               };
               readonly companyName: {
@@ -1204,7 +1217,7 @@ type ContractBase = Omit<
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'mongo/string@1' };
               };
               readonly jdChars: {
-                readonly nullable: false;
+                readonly nullable: true;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'mongo/int32@1' };
               };
               readonly role: {
@@ -1247,8 +1260,16 @@ type ContractBase = Omit<
                 readonly nullable: true;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'mongo/string@1' };
               };
+              readonly errorMessage: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'mongo/string@1' };
+              };
+              readonly result: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'mongo/string@1' };
+              };
               readonly coveragePasses: {
-                readonly nullable: false;
+                readonly nullable: true;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'mongo/int32@1' };
               };
               readonly createdAt: {
@@ -1902,6 +1923,8 @@ type ContractBase = Omit<
           readonly KitStatus: {
             readonly codecId: 'mongo/string@1';
             readonly members: readonly [
+              { readonly name: 'PENDING'; readonly value: 'PENDING' },
+              { readonly name: 'RUNNING'; readonly value: 'RUNNING' },
               { readonly name: 'DRAFT'; readonly value: 'DRAFT' },
               { readonly name: 'RESEARCHING'; readonly value: 'RESEARCHING' },
               { readonly name: 'EXTRACTING'; readonly value: 'EXTRACTING' },

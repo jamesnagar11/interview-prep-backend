@@ -16,13 +16,13 @@ model Kit {
   user          User     @relation(fields: [userId], references: [id])
 
   // idempotency: hash of (jdText + companyUrl) to catch duplicate submissions
-  dedupeHash    String
+  dedupeHash    String?
 
   // source
   companyName   String?
   companyUrl    String
   jdText        String
-  jdChars       Int
+  jdChars       Int?
   role          String?
   location      String?
   daysAvailable Int
@@ -38,7 +38,9 @@ model Kit {
 
   status        KitStatus
   failureReason String?
-  coveragePasses Int
+  errorMessage  String?
+  result        String?
+  coveragePasses Int?
 
   createdAt     DateTime
   updatedAt     DateTime
@@ -59,6 +61,8 @@ model Kit {
 }
 
 enum KitStatus {
+  PENDING
+  RUNNING
   DRAFT
   RESEARCHING
   EXTRACTING

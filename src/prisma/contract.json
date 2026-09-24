@@ -90,6 +90,14 @@
             "codecId": "mongo/string@1",
             "members": [
               {
+                "name": "PENDING",
+                "value": "PENDING"
+              },
+              {
+                "name": "RUNNING",
+                "value": "RUNNING"
+              },
+              {
                 "name": "DRAFT",
                 "value": "DRAFT"
               },
@@ -381,7 +389,7 @@
                 }
               },
               "coveragePasses": {
-                "nullable": false,
+                "nullable": true,
                 "type": {
                   "codecId": "mongo/int32@1",
                   "kind": "scalar"
@@ -402,7 +410,14 @@
                 }
               },
               "dedupeHash": {
-                "nullable": false,
+                "nullable": true,
+                "type": {
+                  "codecId": "mongo/string@1",
+                  "kind": "scalar"
+                }
+              },
+              "errorMessage": {
+                "nullable": true,
                 "type": {
                   "codecId": "mongo/string@1",
                   "kind": "scalar"
@@ -416,7 +431,7 @@
                 }
               },
               "jdChars": {
-                "nullable": false,
+                "nullable": true,
                 "type": {
                   "codecId": "mongo/int32@1",
                   "kind": "scalar"
@@ -440,6 +455,13 @@
                 "nullable": true,
                 "type": {
                   "codecId": "mongo/date@1",
+                  "kind": "scalar"
+                }
+              },
+              "result": {
+                "nullable": true,
+                "type": {
+                  "codecId": "mongo/string@1",
                   "kind": "scalar"
                 }
               },
@@ -1620,7 +1642,10 @@
                       "bsonType": "string"
                     },
                     "coveragePasses": {
-                      "bsonType": "int"
+                      "bsonType": [
+                        "null",
+                        "int"
+                      ]
                     },
                     "createdAt": {
                       "bsonType": "date"
@@ -1629,7 +1654,16 @@
                       "bsonType": "int"
                     },
                     "dedupeHash": {
-                      "bsonType": "string"
+                      "bsonType": [
+                        "null",
+                        "string"
+                      ]
+                    },
+                    "errorMessage": {
+                      "bsonType": [
+                        "null",
+                        "string"
+                      ]
                     },
                     "failureReason": {
                       "bsonType": [
@@ -1638,7 +1672,10 @@
                       ]
                     },
                     "jdChars": {
-                      "bsonType": "int"
+                      "bsonType": [
+                        "null",
+                        "int"
+                      ]
                     },
                     "jdText": {
                       "bsonType": "string"
@@ -1653,6 +1690,12 @@
                       "bsonType": [
                         "null",
                         "date"
+                      ]
+                    },
+                    "result": {
+                      "bsonType": [
+                        "null",
+                        "string"
                       ]
                     },
                     "role": {
@@ -1676,6 +1719,8 @@
                     "status": {
                       "bsonType": "string",
                       "enum": [
+                        "PENDING",
+                        "RUNNING",
                         "DRAFT",
                         "RESEARCHING",
                         "EXTRACTING",
@@ -1696,11 +1741,8 @@
                   "required": [
                     "_id",
                     "companyUrl",
-                    "coveragePasses",
                     "createdAt",
                     "daysAvailable",
-                    "dedupeHash",
-                    "jdChars",
                     "jdText",
                     "status",
                     "updatedAt",
@@ -2223,6 +2265,8 @@
             "KitStatus": {
               "kind": "valueSet",
               "values": [
+                "PENDING",
+                "RUNNING",
                 "DRAFT",
                 "RESEARCHING",
                 "EXTRACTING",
@@ -2239,7 +2283,7 @@
         "kind": "mongo-database"
       }
     },
-    "storageHash": "0100b924e4cb8566da657aa59828bd6301bcd76035547be9398fcb7925060c83"
+    "storageHash": "9147e09435f09b79b26a17319af15690ba18323ee1c2864283c3f756bc847ad2"
   },
   "capabilities": {},
   "extensions": {},
