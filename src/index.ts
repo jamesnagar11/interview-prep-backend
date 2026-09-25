@@ -4,6 +4,7 @@ import authRouter from "./routes/auth";
 import kitsRouter from "./routes/kits";
 import builderRouter from "./routes/builder";
 import practiceRouter from "./routes/practice";
+import mockExamRouter from "./routes/mockExam";
 import cors from "cors";
 
 dotenv.config();
@@ -27,6 +28,7 @@ app.use("/api/auth", authRouter);
 app.use("/api", kitsRouter);
 app.use("/api", builderRouter);
 app.use("/api", practiceRouter);
+app.use("/api", mockExamRouter);
 
 app.get("/", (req, res) => {
   res.send("Hi");

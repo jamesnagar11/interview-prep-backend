@@ -1,4 +1,4 @@
-import { isAllowedByRobots } from './robots';
+import { isAllowedByRobots, getRobotsChecker } from './robots';
 import { cleanHtmlToText } from './cleanText';
 
 export interface FetchResult {
@@ -12,16 +12,27 @@ const MAX_SIZE_BYTES = 2 * 1024 * 1024; // 2MB
 
 export async function fetchSinglePage(
   url: string,
-  retriesLeft = 2
+  retriesLeft = 1,
+  robotsChecker?: Awaited<ReturnType<typeof getRobotsChecker>>
 ): Promise<FetchResult> {
-  const allowed = await isAllowedByRobots(url);
+  // Use pre-fetched robots checker if provided (avoids redundant network requests)
+  let allowed = true;
+  try {
+    if (robotsChecker) {
+      allowed = robotsChecker.isAllowed(url, 'Mozilla/5.0') !== false;
+    } else {
+      allowed = await isAllowedByRobots(url);
+    }
+  } catch {
+    allowed = true;
+  }
   if (!allowed) {
     return { url, ok: false, reason: 'robots_disallowed' };
   }
 
   try {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 7000); // 7s timeout
+    const timer = setTimeout(() => controller.abort(), 6000); // 6s timeout (was 7s)
 
     const res = await fetch(url, {
       signal: controller.signal,
@@ -39,8 +50,8 @@ export async function fetchSinglePage(
 
     if (!res.ok) {
       if (retriesLeft > 0 && res.status >= 500) {
-        await new Promise((r) => setTimeout(r, 1000 * (3 - retriesLeft)));
-        return fetchSinglePage(url, retriesLeft - 1);
+        await new Promise((r) => setTimeout(r, 500));
+        return fetchSinglePage(url, retriesLeft - 1, robotsChecker);
       }
       return { url, ok: false, reason: `HTTP_${res.status}` };
     }
@@ -64,18 +75,32 @@ export async function fetchSinglePage(
     return { url, ok: true, text: cleaned };
   } catch (err: any) {
     if (retriesLeft > 0) {
-      await new Promise((r) => setTimeout(r, 1000 * (3 - retriesLeft)));
-      return fetchSinglePage(url, retriesLeft - 1);
+      await new Promise((r) => setTimeout(r, 500));
+      return fetchSinglePage(url, retriesLeft - 1, robotsChecker);
     }
     return { url, ok: false, reason: err.name === 'AbortError' ? 'timeout' : err.message || 'fetch_error' };
   }
 }
 
-// Concurrency runner helper (concurrency cap 2-3)
+// Concurrency runner helper — warm-up robots.txt once per origin then shares checker across workers
 export async function fetchBatchWithConcurrency(
   urls: string[],
-  concurrencyLimit = 3
+  concurrencyLimit = 5
 ): Promise<FetchResult[]> {
+  if (urls.length === 0) return [];
+
+  // Pre-fetch robots.txt once for the shared origin (if all urls share the same origin)
+  let sharedRobotsChecker: Awaited<ReturnType<typeof getRobotsChecker>> | undefined;
+  try {
+    const firstOrigin = new URL(urls[0]!).origin;
+    const allSameOrigin = urls.every((u) => new URL(u).origin === firstOrigin);
+    if (allSameOrigin) {
+      sharedRobotsChecker = await getRobotsChecker(firstOrigin);
+    }
+  } catch {
+    // ignore — will fall back to per-URL robots check
+  }
+
   const results: FetchResult[] = [];
   const queue = [...urls];
 
@@ -83,7 +108,7 @@ export async function fetchBatchWithConcurrency(
     while (queue.length > 0) {
       const url = queue.shift();
       if (!url) break;
-      const res = await fetchSinglePage(url);
+      const res = await fetchSinglePage(url, 1, sharedRobotsChecker);
       results.push(res);
     }
   }

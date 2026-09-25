@@ -24,6 +24,14 @@
       "model": "KitPage",
       "namespace": "__unbound__"
     },
+    "mockExam": {
+      "model": "MockExam",
+      "namespace": "__unbound__"
+    },
+    "mockExamQuestion": {
+      "model": "MockExamQuestion",
+      "namespace": "__unbound__"
+    },
     "practiceAttempt": {
       "model": "PracticeAttempt",
       "namespace": "__unbound__"
@@ -576,6 +584,21 @@
                   "namespace": "__unbound__"
                 }
               },
+              "mockExams": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "_id"
+                  ],
+                  "targetFields": [
+                    "kitId"
+                  ]
+                },
+                "to": {
+                  "model": "MockExam",
+                  "namespace": "__unbound__"
+                }
+              },
               "pagesUsed": {
                 "cardinality": "1:N",
                 "on": {
@@ -761,6 +784,220 @@
             },
             "storage": {
               "collection": "kitPage"
+            }
+          },
+          "MockExam": {
+            "fields": {
+              "_id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "mongo/objectId@1",
+                  "kind": "scalar"
+                }
+              },
+              "aiReport": {
+                "nullable": true,
+                "type": {
+                  "codecId": "mongo/string@1",
+                  "kind": "scalar"
+                }
+              },
+              "durationSec": {
+                "nullable": true,
+                "type": {
+                  "codecId": "mongo/int32@1",
+                  "kind": "scalar"
+                }
+              },
+              "finishedAt": {
+                "nullable": true,
+                "type": {
+                  "codecId": "mongo/date@1",
+                  "kind": "scalar"
+                }
+              },
+              "kitId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "mongo/string@1",
+                  "kind": "scalar"
+                }
+              },
+              "startedAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "mongo/date@1",
+                  "kind": "scalar"
+                }
+              },
+              "title": {
+                "nullable": false,
+                "type": {
+                  "codecId": "mongo/string@1",
+                  "kind": "scalar"
+                }
+              },
+              "userId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "mongo/string@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "kit": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "kitId"
+                  ],
+                  "targetFields": [
+                    "_id"
+                  ]
+                },
+                "to": {
+                  "model": "Kit",
+                  "namespace": "__unbound__"
+                }
+              },
+              "questions": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "_id"
+                  ],
+                  "targetFields": [
+                    "mockExamId"
+                  ]
+                },
+                "to": {
+                  "model": "MockExamQuestion",
+                  "namespace": "__unbound__"
+                }
+              },
+              "user": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "userId"
+                  ],
+                  "targetFields": [
+                    "_id"
+                  ]
+                },
+                "to": {
+                  "model": "User",
+                  "namespace": "__unbound__"
+                }
+              }
+            },
+            "storage": {
+              "collection": "mockExam"
+            }
+          },
+          "MockExamQuestion": {
+            "fields": {
+              "_id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "mongo/objectId@1",
+                  "kind": "scalar"
+                }
+              },
+              "answerOutline": {
+                "nullable": false,
+                "type": {
+                  "codecId": "mongo/string@1",
+                  "kind": "scalar"
+                }
+              },
+              "category": {
+                "nullable": false,
+                "type": {
+                  "codecId": "mongo/string@1",
+                  "kind": "scalar"
+                }
+              },
+              "confidence": {
+                "nullable": true,
+                "type": {
+                  "codecId": "mongo/int32@1",
+                  "kind": "scalar"
+                }
+              },
+              "difficulty": {
+                "nullable": false,
+                "type": {
+                  "codecId": "mongo/int32@1",
+                  "kind": "scalar"
+                }
+              },
+              "flagged": {
+                "nullable": true,
+                "type": {
+                  "codecId": "mongo/bool@1",
+                  "kind": "scalar"
+                }
+              },
+              "mockExamId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "mongo/string@1",
+                  "kind": "scalar"
+                }
+              },
+              "position": {
+                "nullable": false,
+                "type": {
+                  "codecId": "mongo/int32@1",
+                  "kind": "scalar"
+                }
+              },
+              "questionId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "mongo/string@1",
+                  "kind": "scalar"
+                }
+              },
+              "questionText": {
+                "nullable": false,
+                "type": {
+                  "codecId": "mongo/string@1",
+                  "kind": "scalar"
+                }
+              },
+              "userNotes": {
+                "nullable": true,
+                "type": {
+                  "codecId": "mongo/string@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "mockExam": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "mockExamId"
+                  ],
+                  "targetFields": [
+                    "_id"
+                  ]
+                },
+                "to": {
+                  "model": "MockExam",
+                  "namespace": "__unbound__"
+                }
+              }
+            },
+            "storage": {
+              "collection": "mockExamQuestion"
             }
           },
           "PracticeAttempt": {
@@ -1584,6 +1821,21 @@
                   "namespace": "__unbound__"
                 }
               },
+              "mockExams": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "_id"
+                  ],
+                  "targetFields": [
+                    "userId"
+                  ]
+                },
+                "to": {
+                  "model": "MockExam",
+                  "namespace": "__unbound__"
+                }
+              },
               "practiceSessions": {
                 "cardinality": "1:N",
                 "on": {
@@ -1943,6 +2195,152 @@
                     "_id",
                     "kitId",
                     "url"
+                  ]
+                },
+                "kind": "mongo-validator",
+                "validationAction": "error",
+                "validationLevel": "strict"
+              }
+            },
+            "mockExam": {
+              "indexes": [
+                {
+                  "keys": [
+                    {
+                      "direction": 1,
+                      "field": "userId"
+                    },
+                    {
+                      "direction": 1,
+                      "field": "kitId"
+                    }
+                  ],
+                  "kind": "mongo-index"
+                }
+              ],
+              "kind": "mongo-collection",
+              "validator": {
+                "jsonSchema": {
+                  "additionalProperties": false,
+                  "bsonType": "object",
+                  "properties": {
+                    "_id": {
+                      "bsonType": "objectId"
+                    },
+                    "aiReport": {
+                      "bsonType": [
+                        "null",
+                        "string"
+                      ]
+                    },
+                    "durationSec": {
+                      "bsonType": [
+                        "null",
+                        "int"
+                      ]
+                    },
+                    "finishedAt": {
+                      "bsonType": [
+                        "null",
+                        "date"
+                      ]
+                    },
+                    "kitId": {
+                      "bsonType": "string"
+                    },
+                    "startedAt": {
+                      "bsonType": "date"
+                    },
+                    "title": {
+                      "bsonType": "string"
+                    },
+                    "userId": {
+                      "bsonType": "string"
+                    }
+                  },
+                  "required": [
+                    "_id",
+                    "kitId",
+                    "startedAt",
+                    "title",
+                    "userId"
+                  ]
+                },
+                "kind": "mongo-validator",
+                "validationAction": "error",
+                "validationLevel": "strict"
+              }
+            },
+            "mockExamQuestion": {
+              "indexes": [
+                {
+                  "keys": [
+                    {
+                      "direction": 1,
+                      "field": "mockExamId"
+                    }
+                  ],
+                  "kind": "mongo-index"
+                }
+              ],
+              "kind": "mongo-collection",
+              "validator": {
+                "jsonSchema": {
+                  "additionalProperties": false,
+                  "bsonType": "object",
+                  "properties": {
+                    "_id": {
+                      "bsonType": "objectId"
+                    },
+                    "answerOutline": {
+                      "bsonType": "string"
+                    },
+                    "category": {
+                      "bsonType": "string"
+                    },
+                    "confidence": {
+                      "bsonType": [
+                        "null",
+                        "int"
+                      ]
+                    },
+                    "difficulty": {
+                      "bsonType": "int"
+                    },
+                    "flagged": {
+                      "bsonType": [
+                        "null",
+                        "bool"
+                      ]
+                    },
+                    "mockExamId": {
+                      "bsonType": "string"
+                    },
+                    "position": {
+                      "bsonType": "int"
+                    },
+                    "questionId": {
+                      "bsonType": "string"
+                    },
+                    "questionText": {
+                      "bsonType": "string"
+                    },
+                    "userNotes": {
+                      "bsonType": [
+                        "null",
+                        "string"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "_id",
+                    "answerOutline",
+                    "category",
+                    "difficulty",
+                    "mockExamId",
+                    "position",
+                    "questionId",
+                    "questionText"
                   ]
                 },
                 "kind": "mongo-validator",
@@ -2521,7 +2919,7 @@
         "kind": "mongo-database"
       }
     },
-    "storageHash": "4d92e6d9da6bc2d0e72d67d40ede9606b424278e7e684386988d068cc38710b7"
+    "storageHash": "317eca69d5fe715064c379424337a5a1ff0d65ad9d5a15eb70ec6f98d96bbb89"
   },
   "capabilities": {},
   "extensions": {},

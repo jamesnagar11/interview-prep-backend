@@ -26,11 +26,14 @@ const ExtractedRoleSchema = z.object({
 
 export async function extractRequirements(jd: string): Promise<ExtractedRole> {
   const start = Date.now();
+  // Cap very large JDs — LLMs handle context better with focused inputs, and this avoids slow completions
+  const cappedJd = jd.length > 6000 ? jd.slice(0, 6000) + '\n\n[Job description truncated for processing]' : jd;
+
   const prompt = `You are an expert HR and technical recruiter. Read the following Job Description (JD) carefully and extract the role details and requirements.
 
 Job Description:
 """
-${jd}
+${cappedJd}
 """
 
 Return ONLY a JSON object with this EXACT structure (no markdown fences, no conversational text):

@@ -31,19 +31,26 @@ export async function questionGenNode(state: {
   const warnings: string[] = [];
   let successCount = 0;
 
-  for (const { category, reqs } of groups) {
-    try {
+  // Run all question-category LLM calls in parallel — biggest speed win
+  const categoryResults = await Promise.allSettled(
+    groups.map(({ category, reqs }) => {
       const needsHiringContext = category === 'technical' || category === 'system-design';
-      const results = await generateQuestionsForCategory(
+      return generateQuestionsForCategory(
         reqs,
         category,
         daysAvailable,
         needsHiringContext ? hiringProcessText : null
       );
-      allRaw.push(...results);
+    })
+  );
+
+  for (let i = 0; i < categoryResults.length; i++) {
+    const result = categoryResults[i]!;
+    if (result.status === 'fulfilled') {
+      allRaw.push(...result.value);
       successCount++;
-    } catch {
-      warnings.push(`Question generation failed for category: ${category}`);
+    } else {
+      warnings.push(`Question generation failed for category: ${groups[i]!.category}`);
     }
   }
 

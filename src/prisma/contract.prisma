@@ -8,6 +8,7 @@ model User {
   createdAt        DateTime
   kits             Kit[]
   practiceSessions PracticeSession[]
+  mockExams        MockExam[]
 }
 
 model Kit {
@@ -63,6 +64,7 @@ model Kit {
   flashcards       Flashcard[]
   scheduleDays     ScheduleDay[]
   practiceSessions PracticeSession[]
+  mockExams        MockExam[]
 
   @@index([userId])
   @@index([dedupeHash])
@@ -242,4 +244,38 @@ model PracticeAttempt {
 
   @@index([sessionId])
   @@index([flashcardId])
+}
+
+// Mock Exam — records a full mock question session with per-question ratings
+model MockExam {
+  id          ObjectId          @id @map("_id")
+  userId      String
+  user        User              @relation(fields: [userId], references: [id])
+  kitId       String
+  kit         Kit               @relation(fields: [kitId], references: [id])
+  title       String            // e.g. "Full Mock Exam" or "Day 2 Practice Test"
+  startedAt   DateTime
+  finishedAt  DateTime?
+  durationSec Int?              // elapsed time in seconds
+  aiReport    String?           // JSON stringified AI coaching report
+  questions   MockExamQuestion[]
+
+  @@index([userId, kitId])
+}
+
+model MockExamQuestion {
+  id            ObjectId  @id @map("_id")
+  mockExamId    String
+  mockExam      MockExam  @relation(fields: [mockExamId], references: [id])
+  questionId    String    // stableKey e.g. "q1"
+  questionText  String
+  answerOutline String
+  category      String
+  difficulty    Int
+  userNotes     String?   // user's typed response/notes
+  confidence    Int?      // 1-10 self-rating, null if not rated
+  flagged       Boolean?
+  position      Int       // order in the exam
+
+  @@index([mockExamId])
 }

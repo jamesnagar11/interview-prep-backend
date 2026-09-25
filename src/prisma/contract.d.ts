@@ -18,7 +18,7 @@ import type {
 } from '@prisma/orm-mongo/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'4d92e6d9da6bc2d0e72d67d40ede9606b424278e7e684386988d068cc38710b7'>;
+  StorageHashBase<'317eca69d5fe715064c379424337a5a1ff0d65ad9d5a15eb70ec6f98d96bbb89'>;
 export type ExecutionHash = ExecutionHashBase<string>;
 export type ProfileHash =
   ProfileHashBase<'251b3ce23f6c9f561892e7c1af9d2cc941a13d64ba1aa7226b90036b09568cc3'>;
@@ -87,6 +87,29 @@ export type FieldOutputTypes = {
       readonly _id: CodecTypes['mongo/objectId@1']['output'];
       readonly kitId: CodecTypes['mongo/string@1']['output'];
       readonly url: CodecTypes['mongo/string@1']['output'];
+    };
+    readonly MockExam: {
+      readonly _id: CodecTypes['mongo/objectId@1']['output'];
+      readonly userId: CodecTypes['mongo/string@1']['output'];
+      readonly kitId: CodecTypes['mongo/string@1']['output'];
+      readonly title: CodecTypes['mongo/string@1']['output'];
+      readonly startedAt: CodecTypes['mongo/date@1']['output'];
+      readonly finishedAt: CodecTypes['mongo/date@1']['output'] | null;
+      readonly durationSec: CodecTypes['mongo/int32@1']['output'] | null;
+      readonly aiReport: CodecTypes['mongo/string@1']['output'] | null;
+    };
+    readonly MockExamQuestion: {
+      readonly _id: CodecTypes['mongo/objectId@1']['output'];
+      readonly mockExamId: CodecTypes['mongo/string@1']['output'];
+      readonly questionId: CodecTypes['mongo/string@1']['output'];
+      readonly questionText: CodecTypes['mongo/string@1']['output'];
+      readonly answerOutline: CodecTypes['mongo/string@1']['output'];
+      readonly category: CodecTypes['mongo/string@1']['output'];
+      readonly difficulty: CodecTypes['mongo/int32@1']['output'];
+      readonly userNotes: CodecTypes['mongo/string@1']['output'] | null;
+      readonly confidence: CodecTypes['mongo/int32@1']['output'] | null;
+      readonly flagged: CodecTypes['mongo/bool@1']['output'] | null;
+      readonly position: CodecTypes['mongo/int32@1']['output'];
     };
     readonly PracticeAttempt: {
       readonly _id: CodecTypes['mongo/objectId@1']['output'];
@@ -231,6 +254,29 @@ export type FieldInputTypes = {
       readonly kitId: CodecTypes['mongo/string@1']['input'];
       readonly url: CodecTypes['mongo/string@1']['input'];
     };
+    readonly MockExam: {
+      readonly _id: CodecTypes['mongo/objectId@1']['input'];
+      readonly userId: CodecTypes['mongo/string@1']['input'];
+      readonly kitId: CodecTypes['mongo/string@1']['input'];
+      readonly title: CodecTypes['mongo/string@1']['input'];
+      readonly startedAt: CodecTypes['mongo/date@1']['input'];
+      readonly finishedAt: CodecTypes['mongo/date@1']['input'] | null;
+      readonly durationSec: CodecTypes['mongo/int32@1']['input'] | null;
+      readonly aiReport: CodecTypes['mongo/string@1']['input'] | null;
+    };
+    readonly MockExamQuestion: {
+      readonly _id: CodecTypes['mongo/objectId@1']['input'];
+      readonly mockExamId: CodecTypes['mongo/string@1']['input'];
+      readonly questionId: CodecTypes['mongo/string@1']['input'];
+      readonly questionText: CodecTypes['mongo/string@1']['input'];
+      readonly answerOutline: CodecTypes['mongo/string@1']['input'];
+      readonly category: CodecTypes['mongo/string@1']['input'];
+      readonly difficulty: CodecTypes['mongo/int32@1']['input'];
+      readonly userNotes: CodecTypes['mongo/string@1']['input'] | null;
+      readonly confidence: CodecTypes['mongo/int32@1']['input'] | null;
+      readonly flagged: CodecTypes['mongo/bool@1']['input'] | null;
+      readonly position: CodecTypes['mongo/int32@1']['input'];
+    };
     readonly PracticeAttempt: {
       readonly _id: CodecTypes['mongo/objectId@1']['input'];
       readonly sessionId: CodecTypes['mongo/string@1']['input'];
@@ -321,7 +367,8 @@ export namespace Models {
     createdAt: CodecTypes['mongo/date@1']['output'];
     kits: unbound_Kit[];
     practiceSessions: unbound_PracticeSession[];
-    readonly [RelationKeys]?: 'kits' | 'practiceSessions';
+    mockExams: unbound_MockExam[];
+    readonly [RelationKeys]?: 'kits' | 'practiceSessions' | 'mockExams';
   };
   export type unbound_Kit = {
     _id: CodecTypes['mongo/objectId@1']['output'];
@@ -370,6 +417,7 @@ export namespace Models {
     flashcards: unbound_Flashcard[];
     scheduleDays: unbound_ScheduleDay[];
     practiceSessions: unbound_PracticeSession[];
+    mockExams: unbound_MockExam[];
     readonly [RelationKeys]?:
       | 'user'
       | 'pagesUsed'
@@ -381,7 +429,8 @@ export namespace Models {
       | 'questions'
       | 'flashcards'
       | 'scheduleDays'
-      | 'practiceSessions';
+      | 'practiceSessions'
+      | 'mockExams';
   };
   export type unbound_KitPage = {
     _id: CodecTypes['mongo/objectId@1']['output'];
@@ -519,6 +568,35 @@ export namespace Models {
     flashcard: unbound_Flashcard;
     readonly [RelationKeys]?: 'session' | 'flashcard';
   };
+  export type unbound_MockExam = {
+    _id: CodecTypes['mongo/objectId@1']['output'];
+    userId: CodecTypes['mongo/string@1']['output'];
+    kitId: CodecTypes['mongo/string@1']['output'];
+    title: CodecTypes['mongo/string@1']['output'];
+    startedAt: CodecTypes['mongo/date@1']['output'];
+    finishedAt: CodecTypes['mongo/date@1']['output'] | null;
+    durationSec: CodecTypes['mongo/int32@1']['output'] | null;
+    aiReport: CodecTypes['mongo/string@1']['output'] | null;
+    user: unbound_User;
+    kit: unbound_Kit;
+    questions: unbound_MockExamQuestion[];
+    readonly [RelationKeys]?: 'user' | 'kit' | 'questions';
+  };
+  export type unbound_MockExamQuestion = {
+    _id: CodecTypes['mongo/objectId@1']['output'];
+    mockExamId: CodecTypes['mongo/string@1']['output'];
+    questionId: CodecTypes['mongo/string@1']['output'];
+    questionText: CodecTypes['mongo/string@1']['output'];
+    answerOutline: CodecTypes['mongo/string@1']['output'];
+    category: CodecTypes['mongo/string@1']['output'];
+    difficulty: CodecTypes['mongo/int32@1']['output'];
+    userNotes: CodecTypes['mongo/string@1']['output'] | null;
+    confidence: CodecTypes['mongo/int32@1']['output'] | null;
+    flagged: CodecTypes['mongo/bool@1']['output'] | null;
+    position: CodecTypes['mongo/int32@1']['output'];
+    mockExam: unbound_MockExam;
+    readonly [RelationKeys]?: 'mockExam';
+  };
 }
 
 export declare const models: {
@@ -539,6 +617,8 @@ export declare const models: {
     ScheduleDayQuestion: Models.unbound_ScheduleDayQuestion;
     PracticeSession: Models.unbound_PracticeSession;
     PracticeAttempt: Models.unbound_PracticeAttempt;
+    MockExam: Models.unbound_MockExam;
+    MockExamQuestion: Models.unbound_MockExamQuestion;
   };
 };
 
@@ -720,6 +800,79 @@ type ContractBase = Omit<
                   };
                   readonly additionalProperties: false;
                   readonly required: readonly ['_id', 'kitId', 'url'];
+                };
+                readonly validationLevel: 'strict';
+                readonly validationAction: 'error';
+              };
+            };
+            readonly mockExam: {
+              readonly kind: 'mongo-collection';
+              readonly indexes: readonly [
+                {
+                  readonly kind: 'mongo-index';
+                  readonly keys: readonly [
+                    { readonly field: 'userId'; readonly direction: 1 },
+                    { readonly field: 'kitId'; readonly direction: 1 },
+                  ];
+                },
+              ];
+              readonly validator: {
+                readonly kind: 'mongo-validator';
+                readonly jsonSchema: {
+                  readonly bsonType: 'object';
+                  readonly properties: {
+                    readonly _id: { readonly bsonType: 'objectId' };
+                    readonly userId: { readonly bsonType: 'string' };
+                    readonly kitId: { readonly bsonType: 'string' };
+                    readonly title: { readonly bsonType: 'string' };
+                    readonly startedAt: { readonly bsonType: 'date' };
+                    readonly finishedAt: { readonly bsonType: readonly ['null', 'date'] };
+                    readonly durationSec: { readonly bsonType: readonly ['null', 'int'] };
+                    readonly aiReport: { readonly bsonType: readonly ['null', 'string'] };
+                  };
+                  readonly additionalProperties: false;
+                  readonly required: readonly ['_id', 'kitId', 'startedAt', 'title', 'userId'];
+                };
+                readonly validationLevel: 'strict';
+                readonly validationAction: 'error';
+              };
+            };
+            readonly mockExamQuestion: {
+              readonly kind: 'mongo-collection';
+              readonly indexes: readonly [
+                {
+                  readonly kind: 'mongo-index';
+                  readonly keys: readonly [{ readonly field: 'mockExamId'; readonly direction: 1 }];
+                },
+              ];
+              readonly validator: {
+                readonly kind: 'mongo-validator';
+                readonly jsonSchema: {
+                  readonly bsonType: 'object';
+                  readonly properties: {
+                    readonly _id: { readonly bsonType: 'objectId' };
+                    readonly mockExamId: { readonly bsonType: 'string' };
+                    readonly questionId: { readonly bsonType: 'string' };
+                    readonly questionText: { readonly bsonType: 'string' };
+                    readonly answerOutline: { readonly bsonType: 'string' };
+                    readonly category: { readonly bsonType: 'string' };
+                    readonly difficulty: { readonly bsonType: 'int' };
+                    readonly userNotes: { readonly bsonType: readonly ['null', 'string'] };
+                    readonly confidence: { readonly bsonType: readonly ['null', 'int'] };
+                    readonly flagged: { readonly bsonType: readonly ['null', 'bool'] };
+                    readonly position: { readonly bsonType: 'int' };
+                  };
+                  readonly additionalProperties: false;
+                  readonly required: readonly [
+                    '_id',
+                    'answerOutline',
+                    'category',
+                    'difficulty',
+                    'mockExamId',
+                    'position',
+                    'questionId',
+                    'questionText',
+                  ];
                 };
                 readonly validationLevel: 'strict';
                 readonly validationAction: 'error';
@@ -1120,6 +1273,14 @@ type ContractBase = Omit<
       readonly namespace: '__unbound__' & NamespaceId;
       readonly model: 'PracticeAttempt';
     };
+    readonly mockExam: {
+      readonly namespace: '__unbound__' & NamespaceId;
+      readonly model: 'MockExam';
+    };
+    readonly mockExamQuestion: {
+      readonly namespace: '__unbound__' & NamespaceId;
+      readonly model: 'MockExamQuestion';
+    };
   };
   readonly domain: {
     readonly namespaces: {
@@ -1494,6 +1655,17 @@ type ContractBase = Omit<
                   readonly targetFields: readonly ['kitId'];
                 };
               };
+              readonly mockExams: {
+                readonly to: {
+                  readonly namespace: '__unbound__' & NamespaceId;
+                  readonly model: 'MockExam';
+                };
+                readonly cardinality: '1:N';
+                readonly on: {
+                  readonly localFields: readonly ['_id'];
+                  readonly targetFields: readonly ['kitId'];
+                };
+              };
             };
             readonly storage: { readonly collection: 'kit' };
           };
@@ -1527,6 +1699,143 @@ type ContractBase = Omit<
               };
             };
             readonly storage: { readonly collection: 'kitPage' };
+          };
+          readonly MockExam: {
+            readonly fields: {
+              readonly _id: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'mongo/objectId@1' };
+              };
+              readonly userId: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'mongo/string@1' };
+              };
+              readonly kitId: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'mongo/string@1' };
+              };
+              readonly title: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'mongo/string@1' };
+              };
+              readonly startedAt: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'mongo/date@1' };
+              };
+              readonly finishedAt: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'mongo/date@1' };
+              };
+              readonly durationSec: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'mongo/int32@1' };
+              };
+              readonly aiReport: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'mongo/string@1' };
+              };
+            };
+            readonly relations: {
+              readonly user: {
+                readonly to: {
+                  readonly namespace: '__unbound__' & NamespaceId;
+                  readonly model: 'User';
+                };
+                readonly cardinality: 'N:1';
+                readonly nullable: false;
+                readonly on: {
+                  readonly localFields: readonly ['userId'];
+                  readonly targetFields: readonly ['_id'];
+                };
+              };
+              readonly kit: {
+                readonly to: {
+                  readonly namespace: '__unbound__' & NamespaceId;
+                  readonly model: 'Kit';
+                };
+                readonly cardinality: 'N:1';
+                readonly nullable: false;
+                readonly on: {
+                  readonly localFields: readonly ['kitId'];
+                  readonly targetFields: readonly ['_id'];
+                };
+              };
+              readonly questions: {
+                readonly to: {
+                  readonly namespace: '__unbound__' & NamespaceId;
+                  readonly model: 'MockExamQuestion';
+                };
+                readonly cardinality: '1:N';
+                readonly on: {
+                  readonly localFields: readonly ['_id'];
+                  readonly targetFields: readonly ['mockExamId'];
+                };
+              };
+            };
+            readonly storage: { readonly collection: 'mockExam' };
+          };
+          readonly MockExamQuestion: {
+            readonly fields: {
+              readonly _id: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'mongo/objectId@1' };
+              };
+              readonly mockExamId: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'mongo/string@1' };
+              };
+              readonly questionId: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'mongo/string@1' };
+              };
+              readonly questionText: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'mongo/string@1' };
+              };
+              readonly answerOutline: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'mongo/string@1' };
+              };
+              readonly category: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'mongo/string@1' };
+              };
+              readonly difficulty: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'mongo/int32@1' };
+              };
+              readonly userNotes: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'mongo/string@1' };
+              };
+              readonly confidence: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'mongo/int32@1' };
+              };
+              readonly flagged: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'mongo/bool@1' };
+              };
+              readonly position: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'mongo/int32@1' };
+              };
+            };
+            readonly relations: {
+              readonly mockExam: {
+                readonly to: {
+                  readonly namespace: '__unbound__' & NamespaceId;
+                  readonly model: 'MockExam';
+                };
+                readonly cardinality: 'N:1';
+                readonly nullable: false;
+                readonly on: {
+                  readonly localFields: readonly ['mockExamId'];
+                  readonly targetFields: readonly ['_id'];
+                };
+              };
+            };
+            readonly storage: { readonly collection: 'mockExamQuestion' };
           };
           readonly PracticeAttempt: {
             readonly fields: {
@@ -2075,6 +2384,17 @@ type ContractBase = Omit<
                 readonly to: {
                   readonly namespace: '__unbound__' & NamespaceId;
                   readonly model: 'PracticeSession';
+                };
+                readonly cardinality: '1:N';
+                readonly on: {
+                  readonly localFields: readonly ['_id'];
+                  readonly targetFields: readonly ['userId'];
+                };
+              };
+              readonly mockExams: {
+                readonly to: {
+                  readonly namespace: '__unbound__' & NamespaceId;
+                  readonly model: 'MockExam';
                 };
                 readonly cardinality: '1:N';
                 readonly on: {

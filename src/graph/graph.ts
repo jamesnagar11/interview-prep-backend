@@ -18,18 +18,20 @@ if (!process.env.LANGCHAIN_API_KEY || process.env.LANGCHAIN_API_KEY.trim() === '
   process.env.LANGCHAIN_TRACING_V2 = 'false';
 }
 
-const extractNode = async (state: typeof KitState.State) => {
-  console.log('[graph] 🧠 Starting extractNode...');
-  const role = await extractRequirements(state.jd);
-  console.log(`[graph] ✅ extractNode complete (${role.requirements.length} requirements extracted)`);
-  return { role };
-};
-
-const researchNodeWrapper = async (state: typeof KitState.State) => {
-  console.log('[graph] 🌐 Starting researchNode...');
-  const result = await researchNode(state);
-  console.log('[graph] ✅ researchNode complete');
-  return result;
+// ── Parallel fan-out node: runs extractRequirements and researchCompany concurrently ──────────────
+const extractAndResearchNode = async (state: typeof KitState.State) => {
+  console.log('[graph] 🚀 Starting extractNode + researchNode in parallel...');
+  const [roleResult, researchResult] = await Promise.all([
+    extractRequirements(state.jd).then((role) => {
+      console.log(`[graph] ✅ extractNode complete (${role.requirements.length} requirements extracted)`);
+      return role;
+    }),
+    researchNode(state).then((r) => {
+      console.log('[graph] ✅ researchNode complete');
+      return r.research;
+    }),
+  ]);
+  return { role: roleResult, research: researchResult };
 };
 
 const mergeNodeWrapper = async (state: typeof KitState.State) => {
@@ -39,18 +41,24 @@ const mergeNodeWrapper = async (state: typeof KitState.State) => {
   return result;
 };
 
-const briefNodeWrapper = async (state: typeof KitState.State) => {
-  console.log('[graph] 📝 Starting briefNode...');
-  const result = await briefNode(state);
-  console.log('[graph] ✅ briefNode complete');
-  return result;
-};
-
-const questionGenNodeWrapper = async (state: typeof KitState.State) => {
-  console.log('[graph] ❓ Starting questionGenNode...');
-  const result = await questionGenNode(state);
-  console.log(`[graph] ✅ questionGenNode complete (${result.questions.length} questions generated)`);
-  return result;
+// ── Parallel fan-out node: runs briefNode and questionGenNode concurrently ─────────────────────────
+const briefAndQuestionsNode = async (state: typeof KitState.State) => {
+  console.log('[graph] 📝❓ Starting briefNode + questionGenNode in parallel...');
+  const [briefResult, questionsResult] = await Promise.all([
+    briefNode(state).then((r) => {
+      console.log('[graph] ✅ briefNode complete');
+      return r;
+    }),
+    questionGenNode(state).then((r) => {
+      console.log(`[graph] ✅ questionGenNode complete (${r.questions.length} questions generated)`);
+      return r;
+    }),
+  ]);
+  return {
+    companyBrief: briefResult.companyBrief,
+    questions: questionsResult.questions,
+    warnings: [...(briefResult.warnings ?? []), ...(questionsResult.warnings ?? [])],
+  };
 };
 
 const coverageCheckNodeWrapper = async (state: typeof KitState.State) => {
@@ -103,11 +111,9 @@ const persistNodeWrapper = async (state: typeof KitState.State) => {
 };
 
 const builder = new StateGraph(KitState)
-  .addNode('extractNode', extractNode)
-  .addNode('researchNode', researchNodeWrapper)
+  .addNode('extractAndResearchNode', extractAndResearchNode)
   .addNode('mergeNode', mergeNodeWrapper)
-  .addNode('briefNode', briefNodeWrapper)
-  .addNode('questionGenNode', questionGenNodeWrapper)
+  .addNode('briefAndQuestionsNode', briefAndQuestionsNode)
   .addNode('coverageCheckNode', coverageCheckNodeWrapper)
   .addNode('generateGapQuestionsNode', generateGapQuestionsNodeWrapper)
   .addNode('flashcardNode', flashcardNodeWrapper)
@@ -116,13 +122,15 @@ const builder = new StateGraph(KitState)
   .addNode('validateNode', validateNodeWrapper)
   .addNode('persistNode', persistNodeWrapper)
 
-  // Sequential pipeline execution flow
-  .addEdge(START, 'extractNode')
-  .addEdge('extractNode', 'researchNode')
-  .addEdge('researchNode', 'mergeNode')
-  .addEdge('mergeNode', 'briefNode')
-  .addEdge('briefNode', 'questionGenNode')
-  .addEdge('questionGenNode', 'coverageCheckNode')
+  // Optimized pipeline:
+  //   extractNode + researchNode → (parallel fan-out)
+  //   mergeNode
+  //   briefNode + questionGenNode → (parallel fan-out)
+  //   coverageCheckLoop → flashcard → schedule → assemble → validate → persist
+  .addEdge(START, 'extractAndResearchNode')
+  .addEdge('extractAndResearchNode', 'mergeNode')
+  .addEdge('mergeNode', 'briefAndQuestionsNode')
+  .addEdge('briefAndQuestionsNode', 'coverageCheckNode')
   .addConditionalEdges('coverageCheckNode', (state) =>
     state.uncoveredRequirementIds.length > 0 && state.coveragePasses < MAX_COVERAGE_PASSES
       ? 'generateGapQuestionsNode'

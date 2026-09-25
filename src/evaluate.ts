@@ -125,22 +125,24 @@ async function runEvaluation() {
     process.exit(1);
   }
 
-  console.log(`🚀 Processing ${inputCases.length} case(s)...\n`);
+  console.log(`🚀 Processing ${inputCases.length} case(s) with concurrency limit 2...\n`);
 
-  const kitsResults: AppendixBKitResult[] = [];
-  const summaryRows: any[] = [];
+  // Run cases in parallel batches of 2 — safe for free-tier LLM rate limits, halves total wall-clock time
+  const CONCURRENCY = 2;
+  const kitsResults: AppendixBKitResult[] = new Array(inputCases.length);
+  const summaryRows: any[] = new Array(inputCases.length);
   let hasFailure = false;
 
-  for (let idx = 0; idx < inputCases.length; idx++) {
+  async function processCase(idx: number): Promise<void> {
     const c = inputCases[idx]!;
     const caseId = c.id || `case-${String(idx + 1).padStart(2, '0')}`;
     const companyUrl = c.company_url || c.companyUrl || '';
     const jd = c.jd || '';
     const days = typeof c.days === 'number' ? c.days : 5;
 
-    console.log(`--------------------------------------------------------------------------------`);
-    console.log(`▶ Processing Case [${caseId}] (${companyUrl || 'No URL'}, ${days} days)`);
-    console.log(`--------------------------------------------------------------------------------`);
+    console.log(`────────────────────────────────────────────────────────────────────────────────`);
+    console.log(`▶ [${idx + 1}/${inputCases.length}] Starting Case [${caseId}] (${companyUrl || 'No URL'}, ${days} days)`);
+    console.log(`────────────────────────────────────────────────────────────────────────────────`);
 
     const startTime = Date.now();
     try {
@@ -154,14 +156,14 @@ async function runEvaluation() {
       const elapsedSec = ((Date.now() - startTime) / 1000).toFixed(2);
       const uncoveredMusts = checkCoverage(finalKit.role.requirements, finalKit.questions);
 
-      kitsResults.push({
+      kitsResults[idx] = {
         id: caseId,
         status: 'ok',
         kit: finalKit,
         error: null,
-      });
+      };
 
-      summaryRows.push({
+      summaryRows[idx] = {
         ID: caseId,
         Status: 'ok',
         Company: finalKit.source.company || companyUrl,
@@ -172,9 +174,9 @@ async function runEvaluation() {
         Days: finalKit.schedule.days.length,
         UncoveredMust: uncoveredMusts.length,
         Time: `${elapsedSec}s`,
-      });
+      };
 
-      console.log(`  ✅ Finished in ${elapsedSec}s — Status: ok\n`);
+      console.log(`  ✅ [${caseId}] Finished in ${elapsedSec}s — Status: ok\n`);
     } catch (err: any) {
       hasFailure = true;
       const elapsedSec = ((Date.now() - startTime) / 1000).toFixed(2);
@@ -182,7 +184,7 @@ async function runEvaluation() {
       const errorCode = err.code || (err.message?.includes('unreachable') ? 'COMPANY_UNREACHABLE' : 'EXECUTION_ERROR');
       const errorMessage = err.message || String(err);
 
-      kitsResults.push({
+      kitsResults[idx] = {
         id: caseId,
         status: 'failed',
         kit: null,
@@ -190,9 +192,9 @@ async function runEvaluation() {
           code: errorCode,
           message: errorMessage,
         },
-      });
+      };
 
-      summaryRows.push({
+      summaryRows[idx] = {
         ID: caseId,
         Status: 'failed',
         Company: companyUrl,
@@ -204,11 +206,22 @@ async function runEvaluation() {
         UncoveredMust: -1,
         Time: `${elapsedSec}s`,
         Error: errorMessage,
-      });
+      };
 
-      console.error(`  ❌ Failed in ${elapsedSec}s — Error: ${errorMessage}\n`);
+      console.error(`  ❌ [${caseId}] Failed in ${elapsedSec}s — Error: ${errorMessage}\n`);
     }
   }
+
+  // Worker pool: processes cases in parallel with bounded concurrency
+  const idxQueue = inputCases.map((_, i) => i);
+  const workerPool = Array.from({ length: Math.min(CONCURRENCY, inputCases.length) }, async () => {
+    while (idxQueue.length > 0) {
+      const idx = idxQueue.shift()!;
+      await processCase(idx);
+    }
+  });
+  await Promise.all(workerPool);
+
 
   // Construct Appendix B output JSON object
   const outputPayload: AppendixBBatchOutput = {

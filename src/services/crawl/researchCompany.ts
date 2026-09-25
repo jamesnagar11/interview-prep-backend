@@ -89,8 +89,8 @@ export async function researchCompany(companyUrl: string): Promise<ResearchBundl
 
     // 8. Fetch shortlist concurrently
     const batchStart = Date.now();
-    console.log(`[researchCompany] ⚡ Batch fetching shortlist with concurrency limit 3...`);
-    const fetchResults = await fetchBatchWithConcurrency(targetUrls, 3);
+    console.log(`[researchCompany] ⚡ Batch fetching shortlist with concurrency limit 5...`);
+    const fetchResults = await fetchBatchWithConcurrency(targetUrls, 5);
     const batchDuration = ((Date.now() - batchStart) / 1000).toFixed(2);
     console.log(`[researchCompany] 🏁 Batch fetch completed [took ${batchDuration}s].`);
 
