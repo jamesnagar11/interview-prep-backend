@@ -96,12 +96,12 @@ Rules:
     return JSON.parse(clean);
   };
 
-  const count = 1;
+  let count = 1;
   try {
     const jsonObj = parseJson(rawContent);
     const validated = ExtractedRoleSchema.parse(jsonObj);
     console.log(`Done in loop ${count} and took : ${(Date.now() - start)/1000}s`);
-    
+    count++;
     return validated;
   } catch (firstErr) {
     // Retry once with clarification prompt
@@ -116,6 +116,8 @@ Rules:
       const retryContent = await callLlm(messages);
       const jsonObj = parseJson(retryContent);
       const validated = ExtractedRoleSchema.parse(jsonObj);
+      console.log(`Done in loop ${count} and took : ${(Date.now() - start)/1000}s`);
+      count++;
       return validated;
     } catch (secondErr: any) {
       throw new ExtractionFailedError(

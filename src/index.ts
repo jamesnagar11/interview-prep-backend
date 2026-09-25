@@ -34,8 +34,12 @@ app.get("/", (req, res) => {
   res.send("Hi");
 });
 
+app.get("/health", (req, res) => {
+  res.send("Healthy");
+})
+
 app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`Server running on port :${PORT}`);
   if (process.env.LANGCHAIN_TRACING_V2 === 'true') {
     if (process.env.LANGCHAIN_API_KEY) {
       console.log(`📊 LangSmith tracing active for project: "${process.env.LANGCHAIN_PROJECT || 'ai-interview-prep'}"`);

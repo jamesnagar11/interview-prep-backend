@@ -106,7 +106,19 @@ export type KitStatus =
   | 'READY'
   | 'FAILED';
 
+export interface KitProgressPayload {
+  status: KitStatus;
+  step: string;
+  message: string;
+  progress: number;
+  estimatedSecondsRemaining: number;
+  detail?: string;
+  timestamp?: string;
+}
+
 export type KitStreamEvent =
-  | { event: 'status'; data: { status: KitStatus } }
+  | { event: 'status'; data: KitProgressPayload }
+  | { event: 'progress'; data: KitProgressPayload }
   | { event: 'result'; data: AppendixAKit }
   | { event: 'error'; data: { message: string } };
+

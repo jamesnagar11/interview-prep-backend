@@ -6,11 +6,12 @@ import { isAuth } from '../middleware';
 import { verifyToken } from '../service/auth';
 import { db } from '../prisma/db';
 import { runKit } from '../services/kits/kitRunner';
-import { kitEvents } from '../services/kits/kitEvents';
+import { kitEvents, getLatestKitProgress } from '../services/kits/kitEvents';
 import { rebuildKitFromDb } from '../services/kit/rebuildKitFromDb';
 import type { KitStreamEvent, AppendixAKit } from '../types/kit';
 
 const router = Router();
+
 
 // 70-day cap — a 70-day prep plan stops being meaningfully different from "just study broadly"
 const createKitSchema = z.object({
@@ -222,11 +223,24 @@ router.get('/kits/:id/stream', async (req: Request, res: Response) => {
     return res.end();
   }
 
-  // For in-progress states
-  send({
-    event: 'status',
-    data: { status: kit.status as any },
-  });
+  // For in-progress states: replay cached progress or default status payload
+  const cached = getLatestKitProgress(kitId);
+  if (cached) {
+    send({ event: 'progress', data: cached });
+  } else {
+    send({
+      event: 'status',
+      data: {
+        status: kit.status as any,
+        step: `Stage: ${kit.status}`,
+        message: 'Processing kit pipeline... Sit tight!',
+        progress: 10,
+        estimatedSecondsRemaining: 30,
+        timestamp: new Date().toISOString(),
+      },
+    });
+  }
+
 
   const listener = (evt: KitStreamEvent) => {
     send(evt);
