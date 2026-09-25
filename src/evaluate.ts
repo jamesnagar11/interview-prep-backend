@@ -128,7 +128,7 @@ async function runEvaluation() {
   console.log(`🚀 Processing ${inputCases.length} case(s) with concurrency limit 2...\n`);
 
   // Run cases in parallel batches of 2 — safe for free-tier LLM rate limits, halves total wall-clock time
-  const CONCURRENCY = 2;
+  const CONCURRENCY = 1;
   const kitsResults: AppendixBKitResult[] = new Array(inputCases.length);
   const summaryRows: any[] = new Array(inputCases.length);
   let hasFailure = false;
