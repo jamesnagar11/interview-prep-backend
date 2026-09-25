@@ -20,6 +20,11 @@ export async function persistNode(state: {
     throw new Error('persistNode: finalKit is null — validateNode must have failed silently');
   }
 
+  // Bypass DB persistence if running in EVAL_MODE CLI
+  if (process.env.EVAL_MODE === 'true') {
+    return {};
+  }
+
   // ── 1. KitPage rows (pages_used) ───────────────────────────────────────────
   for (const url of finalKit.source.pages_used) {
     await db.orm.kitPage.create({

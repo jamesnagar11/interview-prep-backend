@@ -36,6 +36,7 @@
     "dev": "bun run ./src/index.ts",
     "build": "bun build ./src/index.ts --outdir ./dist --target bun",
     "start": "bun ./dist/index.js",
+    "evaluate": "bun run ./src/evaluate.ts",
     "contract:db": "bunx prisma@latest contract emit"
   }
 }

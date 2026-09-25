@@ -7,6 +7,7 @@ import { verifyToken } from '../service/auth';
 import { db } from '../prisma/db';
 import { runKit } from '../services/kits/kitRunner';
 import { kitEvents } from '../services/kits/kitEvents';
+import { rebuildKitFromDb } from '../services/kit/rebuildKitFromDb';
 import type { KitStreamEvent, AppendixAKit } from '../types/kit';
 
 const router = Router();
@@ -137,12 +138,20 @@ router.get('/kits/:id', isAuth, async (req: Request, res: Response) => {
       return res.status(200).json({ status: kit.status, errorMessage: kit.errorMessage });
     }
 
-    // Return the stored result JSON (AppendixAKit shape)
-    let result: AppendixAKit;
-    try {
-      result = typeof kit.result === 'string' ? JSON.parse(kit.result) : (kit.result as any);
-    } catch {
-      return res.status(500).json({ success: false, msg: 'Failed to parse kit result' });
+    // Reconstruct kit from DB rows so any committed builder edits (pins, reorders, edits) are accurately reflected
+    let result: AppendixAKit | null = await rebuildKitFromDb(kitId);
+
+    // Fall back to cached kit.result blob if DB reconstruction returned null or failed
+    if (!result && kit.result) {
+      try {
+        result = typeof kit.result === 'string' ? JSON.parse(kit.result) : (kit.result as any);
+      } catch {
+        // ignorable
+      }
+    }
+
+    if (!result) {
+      return res.status(500).json({ success: false, msg: 'Failed to retrieve kit result' });
     }
 
     return res.status(200).json({

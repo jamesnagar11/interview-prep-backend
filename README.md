@@ -90,3 +90,18 @@ Regeneration endpoints (`brief`, question category, `schedule`) run synchronousl
 
 #### `scheduleStale` flag mechanics
 Structural edits to questions (creating, deleting, category updating, or altering questions present in schedule slots) flip `Kit.scheduleStale = true`. This flags to the UI that a schedule re-alignment is recommended. Regenerating the schedule or manually editing the schedule resets `scheduleStale = false`.
+
+---
+
+### Iteration 04 design decisions — Batch Evaluation & Kit DB Reconstruction
+
+#### Batch Evaluation CLI (`bun run evaluate`)
+- Evaluates full graph pipeline quality and coverage offline across multiple JDs in batch without writing to MongoDB (`EVAL_MODE=true`).
+- Command: `bun run evaluate [path/to/cases.jsonl]` (defaults to `cases.jsonl`).
+- Bypasses DB writes in `persistNode` while validating complete kit generation, `checkCoverage` must-have requirement tracking, and step timings.
+- Output: `console.table` summary report detailing Reqs, Questions, Flashcards, Days, Uncovered Musts, and status (`PASS`/`FAIL`). Exits with code 0 on all-PASS, code 1 on failure.
+
+#### DB-backed Kit Reconstruction (`rebuildKitFromDb`)
+- `GET /api/kits/:id` calls `rebuildKitFromDb(kitId)` instead of serving stale `Kit.result` JSON strings.
+- Reconstructs `AppendixAKit` directly from relational tables (`Requirement`, `Question`, `Flashcard`, `ScheduleDay`, etc.), guaranteeing that builder edits (pins, reorders, category updates) immediately reflect across page navigation and reloads.
+- Dual-handling diff shape alignment: `builderService.ts` accepts both Map/Record objects (`Record<id, data>`) and legacy arrays for question/flashcard batch commits.
