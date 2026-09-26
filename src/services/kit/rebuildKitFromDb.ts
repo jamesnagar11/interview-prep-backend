@@ -1,7 +1,13 @@
 import { db } from '../../prisma/db';
 import type { AppendixAKit, CompanyBrief, GeneratedFlashcard, GeneratedQuestion, QuestionCategory, Requirement, ScheduleDay } from '../../types/kit';
 
+export function isValidObjectId(id: string): boolean {
+  return typeof id === 'string' && /^[0-9a-fA-F]{24}$/.test(id);
+}
+
 export async function rebuildKitFromDb(kitId: string): Promise<AppendixAKit | null> {
+  if (!isValidObjectId(kitId)) return null;
+
   const kit = await db.orm.kit.where({ _id: kitId as any }).first();
   if (!kit) return null;
 

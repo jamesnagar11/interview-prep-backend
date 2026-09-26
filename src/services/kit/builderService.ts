@@ -15,10 +15,17 @@ export class BuilderError extends Error {
   }
 }
 
+export function isValidObjectId(id: string): boolean {
+  return typeof id === 'string' && /^[0-9a-fA-F]{24}$/.test(id);
+}
+
 /**
  * Helper to ensure kit exists, belongs to user, and status is READY
  */
 export async function getReadyKitOrThrow(kitId: string, userId: string) {
+  if (!isValidObjectId(kitId)) {
+    throw new BuilderError('Kit not found', 404);
+  }
   const kit = await db.orm.kit.where({ _id: kitId as any }).first();
   if (!kit || (kit as any).userId !== userId) {
     throw new BuilderError('Kit not found', 404);

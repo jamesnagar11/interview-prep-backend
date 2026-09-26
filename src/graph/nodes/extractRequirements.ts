@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import type { ExtractedRole } from '../../types/kit';
 import { openrouter } from '../../llm/openrouterClient';
-// import { config } from '../../config/env';
+import { parseJsonFromLLM } from '../../llm/callWithRetry';
 
 export class ExtractionFailedError extends Error {
   constructor(message: string) {
@@ -26,8 +26,14 @@ const ExtractedRoleSchema = z.object({
 
 export async function extractRequirements(jd: string): Promise<ExtractedRole> {
   const start = Date.now();
-  // Cap very large JDs — LLMs handle context better with focused inputs, and this avoids slow completions
-  const cappedJd = jd.length > 6000 ? jd.slice(0, 6000) + '\n\n[Job description truncated for processing]' : jd;
+  
+  // Clean JD: remove EEO boilerplate, recruitment scam notices, legal disclaimers, and footer links
+  const cleanedJd = jd
+    .replace(/(?:Equal Opportunity Employer|Recruitment Scams|Privacy statement|Terms of use|Be aware: Recruitment Scams|All qualified applicants will receive consideration)[\s\S]*/gi, '')
+    .trim();
+
+  // Support comprehensive multi-page job postings (up to 25,000 chars) without truncating technical skill sections
+  const cappedJd = cleanedJd.length > 25000 ? cleanedJd.slice(0, 25000) + '\n\n[Job description truncated]' : cleanedJd;
 
   const prompt = `You are an expert HR and technical recruiter. Read the following Job Description (JD) carefully and extract the role details and requirements.
 
@@ -39,7 +45,7 @@ ${cappedJd}
 Return ONLY a JSON object with this EXACT structure (no markdown fences, no conversational text):
 {
   "title": "Job Title",
-  "seniority": "e.g. Senior, Mid, Junior, Lead, Staff, or Not Specified",
+  "seniority": "e.g. Senior, Mid, Junior, Lead, Staff, Entry Level, or Not Specified",
   "responsibilities": ["Responsibility 1", "Responsibility 2"],
   "requirements": [
     {
@@ -53,9 +59,14 @@ Return ONLY a JSON object with this EXACT structure (no markdown fences, no conv
 
 Rules:
 1. Assign "id" as "r1", "r2", "r3"... in the exact order requirements appear.
-2. Set "kind" to "technical" for coding/tools/stack/architecture, "behavioural" for soft skills/communication/teamwork, "domain" for industry/domain knowledge.
-3. Set "priority" to "must" ONLY for explicit required/must-have language (e.g. "5+ years", "required", "must have", "proficiency in"). Everything else must be "nice".
-4. Never invent requirements or responsibilities not present in the text.`;
+2. Extract ALL distinct technical skills, programming languages, tools, frameworks, operating systems, cloud technologies, domain topics, and soft skills mentioned in the job description.
+3. DYNAMIC SCALING RULE: The number of extracted requirements MUST scale naturally with the size, detail, and richness of the input job description.
+   - For large, multi-faceted job descriptions (e.g. large enterprise postings with many sub-teams or tools), extract a comprehensive set of 12 to 20+ requirements.
+   - For short, concise job descriptions, extract a smaller, focused set of requirements.
+   - Do NOT artificially cap or inflate the requirement list. Let the content depth dictate the requirement count.
+4. Set "kind" to "technical" for coding/tools/languages/frameworks/architecture, "behavioural" for soft skills/communication/teamwork, "domain" for industry/business domain knowledge.
+5. Set "priority" to "must" for core/required qualifications or primary tech stack items. Set to "nice" for secondary preferences.
+6. Never invent requirements or responsibilities not present in the text.`;
 
   async function callLlm(messages: any[]) {
     const response = await openrouter.chat.send({
@@ -87,21 +98,11 @@ Rules:
     throw new ExtractionFailedError(`LLM API call failed: ${err.message}`);
   }
 
-  const parseJson = (text: string) => {
-    let clean = text.trim();
-    if (clean.startsWith('```json')) clean = clean.slice(7);
-    if (clean.startsWith('```')) clean = clean.slice(3);
-    if (clean.endsWith('```')) clean = clean.slice(0, -3);
-    clean = clean.trim();
-    return JSON.parse(clean);
-  };
-
   let count = 1;
   try {
-    const jsonObj = parseJson(rawContent);
+    const jsonObj = parseJsonFromLLM(rawContent);
     const validated = ExtractedRoleSchema.parse(jsonObj);
-    console.log(`Done in loop ${count} and took : ${(Date.now() - start)/1000}s`);
-    count++;
+    console.log(`[extractRequirements] Successfully extracted ${validated.requirements.length} requirements in ${(Date.now() - start)/1000}s`);
     return validated;
   } catch (firstErr) {
     // Retry once with clarification prompt
@@ -114,10 +115,9 @@ Rules:
 
     try {
       const retryContent = await callLlm(messages);
-      const jsonObj = parseJson(retryContent);
+      const jsonObj = parseJsonFromLLM(retryContent);
       const validated = ExtractedRoleSchema.parse(jsonObj);
-      console.log(`Done in loop ${count} and took : ${(Date.now() - start)/1000}s`);
-      count++;
+      console.log(`[extractRequirements] Retry succeeded, extracted ${validated.requirements.length} requirements in ${(Date.now() - start)/1000}s`);
       return validated;
     } catch (secondErr: any) {
       throw new ExtractionFailedError(

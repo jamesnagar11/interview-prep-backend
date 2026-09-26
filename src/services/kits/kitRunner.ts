@@ -35,11 +35,13 @@ export async function runKit(kitId: string, jd: string, companyUrl: string, days
   } catch (err: any) {
     const errorMsg = err.message || 'Kit processing failed';
     try {
-      await db.orm.kit.where({ _id: kitId as any }).update({
-        status: 'FAILED' as any,
-        errorMessage: errorMsg,
-        updatedAt: new Date(),
-      } as any);
+      if (process.env.EVAL_MODE !== 'true' && typeof kitId === 'string' && /^[0-9a-fA-F]{24}$/.test(kitId)) {
+        await db.orm.kit.where({ _id: kitId as any }).update({
+          status: 'FAILED' as any,
+          errorMessage: errorMsg,
+          updatedAt: new Date(),
+        } as any);
+      }
     } catch {
       // ignore db update error on failure path
     }

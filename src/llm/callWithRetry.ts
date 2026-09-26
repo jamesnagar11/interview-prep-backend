@@ -34,15 +34,66 @@ export async function callLLMWithRetry<T>(
 }
 
 /**
- * Strips markdown fences from an LLM response string and parses as JSON.
+ * Strips markdown fences, conversational preambles ("We...", "Here is..."),
+ * safety annotations ("User Safety: safe..."), and extracts valid JSON from any LLM text response.
  */
 export function parseJsonFromLLM(text: string): unknown {
-  let clean = text.trim();
-  if (clean.startsWith('```json')) clean = clean.slice(7);
-  if (clean.startsWith('```')) clean = clean.slice(3);
-  if (clean.endsWith('```')) clean = clean.slice(0, -3);
-  clean = clean.trim();
-  return JSON.parse(clean);
+  if (!text || typeof text !== 'string') {
+    throw new SyntaxError('Empty or non-string response from LLM');
+  }
+
+  // Strip safety ratings / system preamble headers if present
+  let clean = text
+    .replace(/^(?:User Safety|Response Safety|Safety Rating|System Prompt):.*$/gmi, '')
+    .trim();
+
+  // 1. Try direct parse first
+  try {
+    return JSON.parse(clean);
+  } catch {}
+
+  // 2. Extract content from markdown code fences if present
+  const markdownBlockMatch = clean.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+  if (markdownBlockMatch && markdownBlockMatch[1]) {
+    const fencedContent = markdownBlockMatch[1].trim();
+    try {
+      return JSON.parse(fencedContent);
+    } catch {
+      try {
+        return JSON.parse(fencedContent.replace(/,\s*([}\]])/g, '$1'));
+      } catch {}
+    }
+  }
+
+  // 3. Scan for outer JSON object or array bounds (skips conversational preambles/suffixes)
+  const firstBrace = clean.indexOf('{');
+  const firstBracket = clean.indexOf('[');
+  let startIdx = -1;
+
+  if (firstBrace !== -1 && firstBracket !== -1) {
+    startIdx = Math.min(firstBrace, firstBracket);
+  } else if (firstBrace !== -1) {
+    startIdx = firstBrace;
+  } else if (firstBracket !== -1) {
+    startIdx = firstBracket;
+  }
+
+  if (startIdx !== -1) {
+    const isObject = clean[startIdx] === '{';
+    const lastIdx = isObject ? clean.lastIndexOf('}') : clean.lastIndexOf(']');
+    if (lastIdx > startIdx) {
+      const candidate = clean.slice(startIdx, lastIdx + 1).trim();
+      try {
+        return JSON.parse(candidate);
+      } catch {
+        try {
+          return JSON.parse(candidate.replace(/,\s*([}\]])/g, '$1'));
+        } catch {}
+      }
+    }
+  }
+
+  throw new SyntaxError(`Failed to parse JSON from LLM response. Excerpt: "${clean.slice(0, 120)}..."`);
 }
 
 /**

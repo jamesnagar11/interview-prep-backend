@@ -12,6 +12,10 @@ export function getLatestKitProgress(kitId: string): KitProgressPayload | undefi
   return kitProgressCache.get(kitId);
 }
 
+function isValidObjectId(id: string): boolean {
+  return typeof id === 'string' && /^[0-9a-fA-F]{24}$/.test(id);
+}
+
 export async function emitKitProgress(
   kitId: string,
   status: KitStatus,
@@ -37,14 +41,16 @@ export async function emitKitProgress(
   kitEvents.emit(kitId, { event: 'progress', data: payload });
   kitEvents.emit(kitId, { event: 'status', data: payload });
 
-  // 2. Persist status update in DB asynchronously
-  try {
-    await db.orm.kit.where({ _id: kitId as any }).update({
-      status: status as any,
-      updatedAt: new Date(),
-    } as any);
-  } catch (err) {
-    console.error(`[emitKitProgress] DB status update error for kit ${kitId}:`, err);
+  // 2. Persist status update in DB asynchronously if not in EVAL_MODE and kitId is a valid ObjectId
+  if (process.env.EVAL_MODE !== 'true' && isValidObjectId(kitId)) {
+    try {
+      await db.orm.kit.where({ _id: kitId as any }).update({
+        status: status as any,
+        updatedAt: new Date(),
+      } as any);
+    } catch (err) {
+      console.error(`[emitKitProgress] DB status update error for kit ${kitId}:`, err);
+    }
   }
 }
 

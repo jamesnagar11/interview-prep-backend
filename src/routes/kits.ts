@@ -116,6 +116,10 @@ router.post('/kits', isAuth, async (req: Request, res: Response) => {
   }
 });
 
+function isValidObjectId(id: string): boolean {
+  return typeof id === 'string' && /^[0-9a-fA-F]{24}$/.test(id);
+}
+
 // GET /api/kits/:id — reconstruct AppendixAKit from persisted rows for kit-page navigation
 router.get('/kits/:id', isAuth, async (req: Request, res: Response) => {
   const userId = req.user?.userId;
@@ -124,8 +128,8 @@ router.get('/kits/:id', isAuth, async (req: Request, res: Response) => {
   }
 
   const kitId = String(req.params.id || '');
-  if (!kitId) {
-    return res.status(400).json({ success: false, msg: 'Kit ID missing' });
+  if (!kitId || !isValidObjectId(kitId)) {
+    return res.status(404).json({ success: false, msg: 'Kit not found' });
   }
 
   try {
@@ -186,8 +190,8 @@ router.get('/kits/:id/stream', async (req: Request, res: Response) => {
   }
 
   const kitId = String(req.params.id || '');
-  if (!kitId || kitId === '') {
-    return res.status(400).json({ success: false, msg: 'Kit ID missing' });
+  if (!kitId || !isValidObjectId(kitId)) {
+    return res.status(404).json({ success: false, msg: 'Kit not found' });
   }
 
   const kit = await db.orm.kit.where({ _id: kitId as any }).first();
