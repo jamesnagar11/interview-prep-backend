@@ -512,8 +512,13 @@ export async function commitBuilderDiff(kitId: string, userId: string, diff: any
       }
     }
 
-    if (qDiff.updates && Array.isArray(qDiff.updates)) {
-      for (const upItem of qDiff.updates) {
+    if (qDiff.updates) {
+      const updatesList = Array.isArray(qDiff.updates)
+        ? qDiff.updates
+        : Object.entries(qDiff.updates).map(([id, val]: [string, any]) => ({ id, ...val }));
+
+      for (const upItem of updatesList) {
+        if (!upItem || !upItem.id) continue;
         const q = await db.orm.question.where({ kitId, stableKey: upItem.id }).first();
         if (q) {
           const qDbId = (q as any)._id.toString();
@@ -533,8 +538,13 @@ export async function commitBuilderDiff(kitId: string, userId: string, diff: any
       }
     }
 
-    if (qDiff.pins && Array.isArray(qDiff.pins)) {
-      for (const pinItem of qDiff.pins) {
+    if (qDiff.pins) {
+      const pinList = Array.isArray(qDiff.pins)
+        ? qDiff.pins
+        : Object.entries(qDiff.pins).map(([id, pinned]) => ({ id, pinned: Boolean(pinned) }));
+
+      for (const pinItem of pinList) {
+        if (!pinItem || !pinItem.id) continue;
         const q = await db.orm.question.where({ kitId, stableKey: pinItem.id }).first();
         if (q) {
           const newState = pinItem.pinned ? 'PINNED' : 'EDITED';
@@ -543,9 +553,13 @@ export async function commitBuilderDiff(kitId: string, userId: string, diff: any
       }
     }
 
-    if (qDiff.reorders && Array.isArray(qDiff.reorders)) {
-      for (const reorderGroup of qDiff.reorders) {
-        if (Array.isArray(reorderGroup.order)) {
+    if (qDiff.reorders) {
+      const reorderList = Array.isArray(qDiff.reorders)
+        ? qDiff.reorders
+        : Object.entries(qDiff.reorders).map(([category, order]) => ({ category, order }));
+
+      for (const reorderGroup of reorderList) {
+        if (reorderGroup && Array.isArray(reorderGroup.order)) {
           for (let i = 0; i < reorderGroup.order.length; i++) {
             const qid = reorderGroup.order[i];
             const q = await db.orm.question.where({ kitId, stableKey: qid }).first();
@@ -610,8 +624,13 @@ export async function commitBuilderDiff(kitId: string, userId: string, diff: any
       }
     }
 
-    if (fDiff.updates && Array.isArray(fDiff.updates)) {
-      for (const upItem of fDiff.updates) {
+    if (fDiff.updates) {
+      const fUpdatesList = Array.isArray(fDiff.updates)
+        ? fDiff.updates
+        : Object.entries(fDiff.updates).map(([id, val]: [string, any]) => ({ id, ...val }));
+
+      for (const upItem of fUpdatesList) {
+        if (!upItem || !upItem.id) continue;
         const f = await db.orm.flashcard.where({ kitId, stableKey: upItem.id }).first();
         if (f) {
           const fDbId = (f as any)._id.toString();
@@ -625,8 +644,13 @@ export async function commitBuilderDiff(kitId: string, userId: string, diff: any
       }
     }
 
-    if (fDiff.pins && Array.isArray(fDiff.pins)) {
-      for (const pinItem of fDiff.pins) {
+    if (fDiff.pins) {
+      const fPinList = Array.isArray(fDiff.pins)
+        ? fDiff.pins
+        : Object.entries(fDiff.pins).map(([id, pinned]) => ({ id, pinned: Boolean(pinned) }));
+
+      for (const pinItem of fPinList) {
+        if (!pinItem || !pinItem.id) continue;
         const f = await db.orm.flashcard.where({ kitId, stableKey: pinItem.id }).first();
         if (f) {
           const newState = pinItem.pinned ? 'PINNED' : 'EDITED';
@@ -635,16 +659,21 @@ export async function commitBuilderDiff(kitId: string, userId: string, diff: any
       }
     }
 
-    if (fDiff.reorders && Array.isArray(fDiff.reorders)) {
-      for (const reorderGroup of fDiff.reorders) {
-        if (Array.isArray(reorderGroup.order)) {
-          for (let i = 0; i < reorderGroup.order.length; i++) {
-            const fid = reorderGroup.order[i];
-            const f = await db.orm.flashcard.where({ kitId, stableKey: fid }).first();
-            if (f) {
-              await db.orm.flashcard.where({ _id: (f as any)._id.toString() as any }).update({ orderIndex: i } as any);
-            }
-          }
+    if (fDiff.reorders) {
+      let fOrder: string[] = [];
+      if (Array.isArray(fDiff.reorders)) {
+        if (fDiff.reorders.length > 0 && typeof fDiff.reorders[0] === 'string') {
+          fOrder = fDiff.reorders as string[];
+        } else if (fDiff.reorders.length > 0 && (fDiff.reorders[0] as any).order) {
+          fOrder = (fDiff.reorders[0] as any).order;
+        }
+      }
+      for (let i = 0; i < fOrder.length; i++) {
+        const fid = fOrder[i];
+        if (!fid) continue;
+        const f = await db.orm.flashcard.where({ kitId, stableKey: fid }).first();
+        if (f) {
+          await db.orm.flashcard.where({ _id: (f as any)._id.toString() as any }).update({ orderIndex: i } as any);
         }
       }
     }
