@@ -92,7 +92,7 @@ export async function updateQuestion(
   if (data.category !== undefined) updates.category = data.category;
   if (data.difficulty !== undefined) updates.difficulty = data.difficulty;
 
-  await db.orm.question.where({ _id: qDbId as any }).update(updates);
+  await db.orm.question.where({ kitId, stableKey: qid }).update(updates);
 
   // Check if this question currently appears in any ScheduleDayQuestion
   const scheduleSlots = await db.orm.scheduleDayQuestion.where({ questionId: qDbId }).all();
@@ -121,7 +121,7 @@ export async function pinQuestion(kitId: string, userId: string, qid: string, pi
   }
 
   const newState = pinned ? 'PINNED' : 'EDITED';
-  await db.orm.question.where({ _id: (question as any)._id.toString() as any }).update({ state: newState as any });
+  await db.orm.question.where({ kitId, stableKey: qid }).update({ state: newState as any });
 
   const updatedKit = await rebuildKitFromDb(kitId);
   if (updatedKit) {
@@ -530,7 +530,7 @@ export async function commitBuilderDiff(kitId: string, userId: string, diff: any
           if (upItem.category !== undefined) upData.category = upItem.category;
           if (upItem.difficulty !== undefined) upData.difficulty = upItem.difficulty;
 
-          await db.orm.question.where({ _id: qDbId as any }).update(upData);
+          await db.orm.question.where({ kitId, stableKey: upItem.id }).update(upData);
 
           const slots = await db.orm.scheduleDayQuestion.where({ questionId: qDbId }).all();
           if (slots.length > 0) structuralQuestionChanges = true;
@@ -548,7 +548,7 @@ export async function commitBuilderDiff(kitId: string, userId: string, diff: any
         const q = await db.orm.question.where({ kitId, stableKey: pinItem.id }).first();
         if (q) {
           const newState = pinItem.pinned ? 'PINNED' : 'EDITED';
-          await db.orm.question.where({ _id: (q as any)._id.toString() as any }).update({ state: newState as any });
+          await db.orm.question.where({ kitId, stableKey: pinItem.id }).update({ state: newState as any });
         }
       }
     }
@@ -564,7 +564,7 @@ export async function commitBuilderDiff(kitId: string, userId: string, diff: any
             const qid = reorderGroup.order[i];
             const q = await db.orm.question.where({ kitId, stableKey: qid }).first();
             if (q) {
-              await db.orm.question.where({ _id: (q as any)._id.toString() as any }).update({ orderIndex: i } as any);
+              await db.orm.question.where({ kitId, stableKey: qid }).update({ orderIndex: i } as any);
             }
           }
         }
@@ -583,7 +583,7 @@ export async function commitBuilderDiff(kitId: string, userId: string, diff: any
           const fDbId = (f as any)._id.toString();
           await db.orm.flashcardRequirement.where({ flashcardId: fDbId }).deleteAll();
           await db.orm.practiceAttempt.where({ flashcardId: fDbId }).deleteAll();
-          await db.orm.flashcard.where({ _id: fDbId as any }).deleteAll();
+          await db.orm.flashcard.where({ kitId, stableKey: fid }).deleteAll();
         }
       }
     }
@@ -633,13 +633,12 @@ export async function commitBuilderDiff(kitId: string, userId: string, diff: any
         if (!upItem || !upItem.id) continue;
         const f = await db.orm.flashcard.where({ kitId, stableKey: upItem.id }).first();
         if (f) {
-          const fDbId = (f as any)._id.toString();
           const newState = f.state === 'PINNED' ? 'PINNED' : 'EDITED';
           const upData: any = { state: newState as any };
           if (upItem.front !== undefined) upData.front = upItem.front;
           if (upItem.back !== undefined) upData.back = upItem.back;
 
-          await db.orm.flashcard.where({ _id: fDbId as any }).update(upData);
+          await db.orm.flashcard.where({ kitId, stableKey: upItem.id }).update(upData);
         }
       }
     }
@@ -654,7 +653,7 @@ export async function commitBuilderDiff(kitId: string, userId: string, diff: any
         const f = await db.orm.flashcard.where({ kitId, stableKey: pinItem.id }).first();
         if (f) {
           const newState = pinItem.pinned ? 'PINNED' : 'EDITED';
-          await db.orm.flashcard.where({ _id: (f as any)._id.toString() as any }).update({ state: newState as any });
+          await db.orm.flashcard.where({ kitId, stableKey: pinItem.id }).update({ state: newState as any });
         }
       }
     }
@@ -673,7 +672,7 @@ export async function commitBuilderDiff(kitId: string, userId: string, diff: any
         if (!fid) continue;
         const f = await db.orm.flashcard.where({ kitId, stableKey: fid }).first();
         if (f) {
-          await db.orm.flashcard.where({ _id: (f as any)._id.toString() as any }).update({ orderIndex: i } as any);
+          await db.orm.flashcard.where({ kitId, stableKey: fid }).update({ orderIndex: i } as any);
         }
       }
     }
